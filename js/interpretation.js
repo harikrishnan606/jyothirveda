@@ -275,13 +275,13 @@ const Interpretation = (() => {
       trajectory = 'Growth after overcoming initial challenges';
     }
 
-    // Add specific IT/Eng, Finance, Law, Consulting for Harikrishnan's chart
-    // We can infer this based on Jupiter/Mercury/Saturn influence
     let specificFields = fields;
-    if (lord10 === 'Venus' && chart.planets.Saturn.house === 10) {
-      // Custom match for the infographic's specific career fields
-      specificFields = 'IT/Eng, Finance, Law, Consulting, Foreign firms';
-    }
+    // Add occupant influence to fields
+    house10.occupants.forEach(occ => {
+       if (careerSignificators[occ]) {
+          specificFields += ', ' + careerSignificators[occ].split(',')[0].toLowerCase();
+       }
+    });
 
     const educationTags = interpretEducation(chart);
 
@@ -406,14 +406,19 @@ const Interpretation = (() => {
       });
     }
 
-    // Add specific behavioral remedy
+    // Add specific behavioral remedy based on Lagna element
+    const lagnaRasi = chart.lagnaRasiIndex;
+    const element = lagnaRasi % 4; // 0=Fire, 1=Earth, 2=Air, 3=Water
+    
+    let behavioralPractices = [];
+    if (element === 0) behavioralPractices = ['Practice patience and anger management', 'Channel excess energy into physical exercise', 'Avoid impulsive decisions'];
+    else if (element === 1) behavioralPractices = ['Embrace change and flexibility', 'Avoid stubbornness', 'Practice generosity and detachment from material things'];
+    else if (element === 2) behavioralPractices = ['Ground yourself with nature walks', 'Focus on one task at a time to avoid mental scattering', 'Practice regular meditation'];
+    else if (element === 3) behavioralPractices = ['Set healthy emotional boundaries', 'Avoid over-attachment and emotional dependency', 'Engage in creative or artistic expression'];
+
     remedies.push({
-      for: 'Personal/Behavioral Remedies',
-      practices: [
-        'Control speech & criticism',
-        'Maintain work-life balance',
-        'Avoid emotional distance in relationships'
-      ]
+      for: 'Personal/Behavioral Remedies (Based on Ascendant Element)',
+      practices: behavioralPractices
     });
 
     // General remedies if nothing specific
