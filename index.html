@@ -603,13 +603,13 @@ function JyothishamApp() {
         ::-webkit-scrollbar-track { background: #0B1021; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #334155; }
-        body { background-color: #0B1021; color: #f8fafc; overflow: hidden; }
+        body { background-color: #0B1021; color: #f8fafc; overflow-x: hidden; }
       `}</style>
 
-      <div className="flex flex-col lg:flex-row h-screen w-full bg-[#0B1021] overflow-hidden font-sans selection:bg-amber-500/30">
+      <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen w-full bg-[#0B1021] lg:overflow-hidden font-sans selection:bg-amber-500/30">
 
         {/* ═══ LEFT SIDEBAR ═══ */}
-        <div className="w-full lg:w-96 shrink-0 bg-[#0F1524] border-r border-slate-800 flex flex-col h-full lg:h-auto overflow-y-auto z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+        <div className="w-full lg:w-96 shrink-0 bg-[#0F1524] border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col lg:h-full lg:overflow-y-auto z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
           <div className="p-6 md:p-8 flex-1">
             <div className="flex items-center gap-3 mb-8">
               <Sparkles className="text-amber-400" size={28} />
@@ -725,7 +725,7 @@ function JyothishamApp() {
         </div>
 
         {/* ═══ MAIN CONTENT ═══ */}
-        <div className="flex-1 relative h-full overflow-y-auto scroll-smooth">
+        <div className="flex-1 relative w-full h-auto lg:h-full lg:overflow-y-auto scroll-smooth">
 
           {/* Loading overlay */}
           <div className={`absolute inset-0 z-10 bg-[#0B1021]/60 backdrop-blur-sm transition-all duration-500 flex items-center justify-center pointer-events-none ${isCalculating ? 'opacity-100' : 'opacity-0'}`}>
