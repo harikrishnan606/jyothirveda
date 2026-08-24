@@ -636,7 +636,7 @@ function JyothishamApp() {
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Gender</label>
                 <div className="flex gap-2">
-                  {['Male', 'Female', 'Other'].map(g => (
+                  {['Male', 'Female'].map(g => (
                     <button key={g} onClick={() => handleGenderSelect(g)} className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.gender === g ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50 border border-indigo-500' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'}`}>{g}</button>
                   ))}
                 </div>
