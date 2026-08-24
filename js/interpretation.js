@@ -185,9 +185,116 @@ const Interpretation = (() => {
     }
   };
 
-  function interpretPersonality(chart, yogaDoshaResults) {
+  const ML_LAGNA_TRAITS = {
+    0: { // Aries
+      title: 'മുന്നിൽ നിന്ന് നയിക്കുന്നവൻ',
+      traits: 'ചലനാത്മകവും ധീരവും സ്വതന്ത്രവുമായ പ്രകൃതം. മികച്ച ഇച്ഛാശക്തിയും മത്സരബുദ്ധിയുമുള്ള നേതൃഗുണം നിങ്ങൾക്ക് സ്വാഭാവികമായുണ്ട്.',
+      strengths: 'നേതൃത്വം, ധൈര്യം, വേഗത്തിലുള്ള തീരുമാനം, ഉത്സാഹം',
+      challenges: 'എടുത്തുചാട്ടം, അക്ഷമ, ദേഷ്യം വരാനുള്ള പ്രവണത',
+      hidden: 'ദുർബലരെ സംരക്ഷിക്കാനുള്ള അഗാധമായ കഴിവും അനുകമ്പയും',
+      tags: ['കർമ്മനിരതൻ', 'സ്വതന്ത്രൻ', 'എടുത്തുചാട്ടം', 'ധീരൻ', 'വിശ്രമമില്ലാത്തവൻ']
+    },
+    1: { // Taurus
+      title: 'സ്ഥിരതയാർന്ന നിർമ്മാതാവ്',
+      traits: 'ക്ഷമയും വിശ്വാസ്യതയും ഭൂമിയോട് ചേർന്ന സ്വഭാവവും. സുസ്ഥിരതയും ഭൗതിക സുഖങ്ങളും നിങ്ങൾ വിലമതിക്കുന്നു. കലയോടും പ്രകൃതിയോടും സ്വാഭാവികമായ താല്പര്യം.',
+      strengths: 'സ്ഥിരോത്സാഹം, സാമ്പത്തിക ബുദ്ധി, സൗന്ദര്യാസ്വാദനം, വിശ്വസ്തത',
+      challenges: 'ശാഠ്യം, സ്വന്തമാക്കാനുള്ള ആഗ്രഹം, മാറ്റങ്ങളോടുള്ള എതിർപ്പ്',
+      hidden: 'ഭൂമിയുമായുള്ള അഗാധമായ ബന്ധവും നിലനിൽക്കുന്ന നേട്ടങ്ങൾ സൃഷ്ടിക്കാനുള്ള കഴിവും',
+      tags: ['ക്ഷമാശീലൻ', 'പ്രായോഗികം', 'ശാഠ്യം', 'സുഖലോലുപൻ', 'വിശ്വസ്തൻ']
+    },
+    2: { // Gemini
+      title: 'ബഹുമുഖ ആശയവിനിമയകൻ',
+      traits: 'ബൗദ്ധികമായ അന്വേഷണാത്മകതയും സംസാരിക്കാനുള്ള കഴിവും. മാറുന്ന സാഹചര്യങ്ങളുമായി പൊരുത്തപ്പെടാനും ആശയങ്ങളെയും ആളുകളെയും തമ്മിൽ ബന്ധിപ്പിക്കാനും നിങ്ങൾ മിടുക്കനാണ്.',
+      strengths: 'ആശയവിനിമയം, ബഹുമുഖ പ്രതിഭ, വേഗത്തിൽ പഠിക്കാനുള്ള കഴിവ്, ജനസമ്പർക്കം',
+      challenges: 'സ്ഥിരതയില്ലായ്മ, ഉപരിപ്ലവമായ സ്വഭാവം, ബാധ്യതകളോടുള്ള വിമുഖത',
+      hidden: 'നിങ്ങളുടെ ശ്രദ്ധ കേന്ദ്രീകരിക്കുമ്പോൾ പുറത്തുവരുന്ന അഗാധമായ ജ്ഞാനം',
+      tags: ['സംസാരപ്രിയൻ', 'അനുയോജ്യൻ', 'കൗതുകമുള്ളവൻ', 'അസ്ഥിരൻ', 'സാമൂഹ്യൻ']
+    },
+    3: { // Cancer
+      title: 'സ്നേഹമയിയായ സംരക്ഷകൻ',
+      traits: 'അഗാധമായ അവബോധവും വൈകാരിക സമ്പന്നതയും സംരക്ഷണ സ്വഭാവവും. കുടുംബവും വീടുമാണ് നിങ്ങളുടെ ലോകത്തിന്റെ കേന്ദ്രം.',
+      strengths: 'വൈകാരിക ബുദ്ധി, പരിപാലിക്കുന്ന പ്രകൃതം, ശക്തമായ ഉൾക്കാഴ്ച, ദൃഢനിശ്ചയം',
+      challenges: 'മാറുന്ന മാനസികാവസ്ഥ, അമിത വൈകാരികത, ഭൂതകാലത്തെ മറക്കാനുള്ള ബുദ്ധിമുട്ട്',
+      hidden: 'പ്രതിസന്ധി ഘട്ടങ്ങളിൽ പുറത്തുവരുന്ന അസാധാരണമായ ആന്തരിക ശക്തി',
+      tags: ['പരിപാലകൻ', 'ഉൾക്കാഴ്ചയുള്ളവൻ', 'സംരക്ഷകൻ', 'വൈകാരികം', 'കുടുംബസ്നേഹി']
+    },
+    4: { // Leo
+      title: 'രാജകീയ നേതാവ്',
+      traits: 'ആത്മവിശ്വാസവും ഊഷ്മളമായ ഹൃദയവും സ്വാഭാവിക ആകർഷണീയതയും. ശക്തമായ ആത്മാഭിമാനവും മറ്റുള്ളവരെ പ്രചോദിപ്പിക്കാനുള്ള ആഗ്രഹവുമുണ്ട്.',
+      strengths: 'സ്വാഭാവിക നേതൃത്വം, ഔദാര്യം, സർഗ്ഗാത്മകത, സംരക്ഷിക്കുന്ന സ്വഭാവം',
+      challenges: 'അഹങ്കാരം, അംഗീകാരത്തിനായുള്ള ദാഹം, മറ്റുള്ളവർക്ക് അവസരം നൽകാനുള്ള മടി',
+      hidden: 'ഉയർന്ന ലക്ഷ്യങ്ങളുമായി ഒത്തുചേരുമ്പോൾ സർഗ്ഗാത്മക ദർശനങ്ങൾ യാഥാർത്ഥ്യമാക്കാനുള്ള കഴിവ്',
+      tags: ['ആത്മവിശ്വാസി', 'ഉദാരമനസ്കൻ', 'അഭിമാനി', 'സർഗ്ഗാത്മകൻ', 'വിശ്വസ്തൻ']
+    },
+    5: { // Virgo
+      title: 'വിശകലന ബുദ്ധിയുള്ള സഹായി',
+      traits: 'ചിട്ടയായതും സൂക്ഷ്മതയുള്ളതും സേവനമനസ്കവുമായ സ്വഭാവം. നിങ്ങൾ പൂർണ്ണത ആഗ്രഹിക്കുന്നു, സിസ്റ്റങ്ങളെ വിശകലനം ചെയ്യാനും മെച്ചപ്പെടുത്താനുമുള്ള സ്വാഭാവിക കഴിവുണ്ട്.',
+      strengths: 'വിശകലന ശേഷി, സൂക്ഷ്മത, ആരോഗ്യബോധം, പ്രായോഗിക ബുദ്ധി',
+      challenges: 'അമിത വിമർശനം (സ്വയം/മറ്റുള്ളവരെ), ഉത്കണ്ഠ, പൂർണ്ണതയ്ക്കായുള്ള വാശി',
+      hidden: 'സ്വാഭാവികമായ രോഗശാന്തി കഴിവുകളും അലങ്കോലങ്ങളിൽ നിന്ന് അടുക്കും ചിട്ടയും കൊണ്ടുവരാനുള്ള ശേഷിയും',
+      tags: ['വിശകലനാത്മകം', 'പ്രായോഗികം', 'വിമർശകൻ', 'സേവനസന്നദ്ധൻ', 'ഉത്കണ്ഠയുള്ളവൻ']
+    },
+    6: { // Libra
+      title: 'സന്തുലിതമായ നയതന്ത്രജ്ഞൻ',
+      traits: 'ആകർഷകവും ന്യായബോധമുള്ളതും ബന്ധങ്ങൾക്ക് മുൻഗണന നൽകുന്നതുമായ സ്വഭാവം. ജീവിതത്തിന്റെ എല്ലാ മേഖലകളിലും സന്തുലിതാവസ്ഥയും സൗന്ദര്യവും നിങ്ങൾ ആഗ്രഹിക്കുന്നു.',
+      strengths: 'നയതന്ത്രം, സൗന്ദര്യബോധം, പങ്കാളിത്ത നൈപുണ്യം, നീതിബോധം',
+      challenges: 'തീരുമാനമെടുക്കാനുള്ള ബുദ്ധിമുട്ട്, മറ്റുള്ളവരെ പ്രീതിപ്പെടുത്താനുള്ള ശ്രമം, തർക്കങ്ങൾ ഒഴിവാക്കൽ',
+      hidden: 'മാറ്റങ്ങൾക്ക് തിരികൊളുത്താൻ കഴിയുന്ന ശക്തമായ നീതിബോധം',
+      tags: ['നയതന്ത്രജ്ഞൻ', 'സന്തുലിതം', 'തീരുമാനമില്ലായ്മ', 'ആകർഷകം', 'സാമൂഹ്യൻ']
+    },
+    7: { // Scorpio
+      title: 'തീവ്രമായ പരിവർത്തകൻ',
+      traits: 'അഗാധമായ ഉൾക്കാഴ്ചയും അഭിനിവേശവും കഴിവുമുള്ള പ്രകൃതം. ജീവിതത്തിന്റെ ആഴങ്ങളെ ധൈര്യത്തോടെയും തീവ്രതയോടെയും നിങ്ങൾ നേരിടുന്നു.',
+      strengths: 'ഗവേഷണ ശേഷി, വൈകാരിക ആഴം, സ്ഥിരോത്സാഹം, തന്ത്രപരമായ ചിന്ത',
+      challenges: 'അസൂയ, രഹസ്യസ്വഭാവം, മറ്റുള്ളവരെ വിശ്വസിക്കാനുള്ള ബുദ്ധിമുട്ട്',
+      hidden: 'ആത്മീയ പരിവർത്തനത്തിനും സ്വയം നവീകരണത്തിനുമുള്ള അസാധാരണ കഴിവ്',
+      tags: ['തീവ്രം', 'ഉൾക്കാഴ്ച', 'രഹസ്യാത്മകം', 'അഭിനിവേശം', 'സ്ഥിരോത്സാഹം']
+    },
+    8: { // Sagittarius
+      title: 'തത്ത്വചിന്തകനായ യാത്രികൻ',
+      traits: 'ശുഭാപ്തിവിശ്വാസവും സാഹസികതയും സത്യം അന്വേഷിക്കുന്ന പ്രകൃതവും. ഉന്നത അറിവിലേക്കും യാത്രകളിലേക്കും പുതിയ കാഴ്ചപ്പാടുകളിലേക്കും നിങ്ങൾ ആകർഷിക്കപ്പെടുന്നു.',
+      strengths: 'ശുഭാപ്തിവിശ്വാസം, പഠിപ്പിക്കാനുള്ള കഴിവ്, ദാർശനിക ആഴം, സാഹസിക മനോഭാവം',
+      challenges: 'വിശ്രമമില്ലായ്മ, അമിത വാഗ്ദാനങ്ങൾ നൽകൽ, മുഖത്തുനോക്കി സംസാരിക്കൽ, പൂർത്തിയാക്കാനുള്ള മടി',
+      hidden: 'ജ്ഞാനവും ദർശനവും വഴി മുഴുവൻ സമൂഹങ്ങളെയും പ്രചോദിപ്പിക്കാനുള്ള കഴിവ്',
+      tags: ['ശുഭാപ്തിവിശ്വാസി', 'സാഹസികൻ', 'തുറന്നുപറയുന്നവൻ', 'തത്ത്വചിന്തകൻ', 'വിശ്രമമില്ലാത്തവൻ']
+    },
+    9: { // Capricorn
+      title: 'അച്ചടക്കമുള്ള വിജയി',
+      traits: 'ലക്ഷ്യബോധവും ഉത്തരവാദിത്തവും ചിട്ടയായ പ്രവർത്തനവും. നിലനിൽക്കുന്ന ഘടനകൾ കെട്ടിപ്പടുക്കുകയും നിരന്തര പരിശ്രമത്തിലൂടെ ബഹുമാനം നേടുകയും ചെയ്യുന്നു.',
+      strengths: 'അച്ചടക്കം, സംഘാടന ശേഷി, ദീർഘകാല ആസൂത്രണം, അധികാരം',
+      challenges: 'കടുംപിടുത്തം, അമിത ജോലിഭ്രമം, വികാരങ്ങൾ അടിച്ചമർത്തൽ, അശുഭാപ്തിവിശ്വാസം',
+      hidden: 'സമയത്തെക്കുറിച്ചുള്ള അഗാധമായ അറിവും പ്രായം കൂടുന്തോറും കൂടുതൽ കരുത്തനാകാനുള്ള കഴിവും',
+      tags: ['ലക്ഷ്യബോധം', 'ഇച്ഛാശക്തി', 'പ്രായോഗികം', 'കഠിന സ്വഭാവം', 'ഉള്ളിൽ മൃദുവായവൻ', 'വിശ്വാസക്കുറവ്', 'ഉത്കണ്ഠ/വിഷാദ സാധ്യത'],
+      keywords: [
+        { text: 'ലക്ഷ്യബോധം, പ്രായോഗികം', icon: 'Target' },
+        { text: 'ഇച്ഛാശക്തി', icon: 'HandMetal' },
+        { text: 'ഉള്ളിൽ മൃദുവായവൻ', icon: 'Heart' },
+        { text: 'കഠിന സ്വഭാവം', icon: 'User' },
+        { text: 'വിശ്വാസക്കുറവ്', icon: 'ShieldAlert' },
+        { text: 'ഉത്കണ്ഠ സാധ്യത', icon: 'Brain' }
+      ]
+    },
+    10: { // Aquarius
+      title: 'ദർശനമുള്ള മാനുഷികവാദി',
+      traits: 'സ്വതന്ത്രവും നൂതനവും സാമൂഹിക ബോധമുള്ളതുമായ പ്രകൃതം. നിങ്ങൾ കാലത്തിന് മുന്നേ ചിന്തിക്കുകയും സമൂഹത്തിന്റെ പുരോഗതിക്കായി ആഴത്തിൽ കരുതുകയും ചെയ്യുന്നു.',
+      strengths: 'നൂതനാശയങ്ങൾ, മാനുഷിക കാഴ്ചപ്പാട്, സ്വാതന്ത്ര്യം, മൗലികത',
+      challenges: 'വൈകാരിക അകൽച്ച, വിമത സ്വഭാവം, പ്രവചനാതീതത്വം',
+      hidden: 'വിപ്ലവകരമായ ആശയങ്ങളെ പ്രായോഗിക സാമൂഹിക പരിഷ്കാരങ്ങളാക്കി മാറ്റാനുള്ള കഴിവ്',
+      tags: ['നൂതനം', 'സ്വതന്ത്രൻ', 'അകൽച്ചയുള്ളവൻ', 'മാനുഷികം', 'പ്രവചനാതീതം']
+    },
+    11: { // Pisces
+      title: 'അനുകമ്പയുള്ള മിസ്റ്റിക്',
+      traits: 'ഭാവനാസമ്പന്നനും അനുകമ്പയുള്ളവനും ആത്മീയതയുള്ളവനുമാണ് നിങ്ങൾ. മറ്റുള്ളവർ കാണാത്ത സൂക്ഷ്മതകൾ നിങ്ങൾ തിരിച്ചറിയുകയും സമ്പന്നമായ ആന്തരിക ലോകം കാത്തുസൂക്ഷിക്കുകയും ചെയ്യുന്നു.',
+      strengths: 'അനുകമ്പ, സർഗ്ഗാത്മകത, ആത്മീയ സംവേദനക്ഷമത, പൊരുത്തപ്പെടാനുള്ള കഴിവ്',
+      challenges: 'യാഥാർത്ഥ്യത്തിൽ നിന്നുള്ള ഒളിച്ചോട്ടം, അതിരുകൾ നിശ്ചയിക്കാനുള്ള ബുദ്ധിമുട്ട്, അമിത ആദർശവാദം',
+      hidden: 'ബലപ്രയോഗത്തേക്കാൾ കീഴടങ്ങലിലൂടെ പുറത്തുവരുന്ന രോഗശാന്തി നൽകാനുള്ള അഗാധ കഴിവും കലാപരമായ കഴിവുകളും',
+      tags: ['അനുകമ്പയുള്ളവൻ', 'ഭാവനാസമ്പന്നൻ', 'ഒളിച്ചോടുന്നവൻ', 'ആത്മീയൻ', 'സെൻസിറ്റീവ്']
+    }
+  };
+
+  function interpretPersonality(chart, yogaDoshaResults, lang = 'en') {
     const lagnaIndex = chart.lagnaRasiIndex;
-    const traits = LAGNA_TRAITS[lagnaIndex];
+    const traits = lang === 'ml' ? ML_LAGNA_TRAITS[lagnaIndex] : LAGNA_TRAITS[lagnaIndex];
     const lagnaLord = chart.lagnaRasi.lord;
     const lagnaLordData = chart.planets[lagnaLord];
 
@@ -218,7 +325,7 @@ const Interpretation = (() => {
     };
   }
 
-  function interpretEducation(chart) {
+  function interpretEducation(chart, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord4 = VedicCore.getLordOf(4, lagna);
     const lord5 = VedicCore.getLordOf(5, lagna);
@@ -228,51 +335,51 @@ const Interpretation = (() => {
     const l9Data = chart.planets[lord9];
 
     let eduTags = [];
-    if (l4Data.dignity === 'Exalted' || l4Data.dignity === 'Own') eduTags.push('Outstanding Academic Potential');
-    else eduTags.push('Good Academic Foundation');
+    if (l4Data.dignity === 'Exalted' || l4Data.dignity === 'Own') eduTags.push(lang === 'ml' ? 'മികച്ച അക്കാദമിക് സാധ്യതകൾ' : 'Outstanding Academic Potential');
+    else eduTags.push(lang === 'ml' ? 'നല്ല അടിസ്ഥാന വിദ്യാഭ്യാസം' : 'Good Academic Foundation');
 
     if (l5Data.dignity === 'Exalted' || l5Data.dignity === 'Own' || l9Data.dignity === 'Exalted') {
-      eduTags.push('Research, Higher Ed');
+      eduTags.push(lang === 'ml' ? 'ഗവേഷണം, ഉന്നത വിദ്യാഭ്യാസം' : 'Research, Higher Ed');
     }
 
     return eduTags;
   }
 
   // ─── Career Interpretation ────────────────────────────────
-  function interpretCareer(chart) {
+  function interpretCareer(chart, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord10 = VedicCore.getLordOf(10, lagna);
     const lord10Data = chart.planets[lord10];
     const house10 = chart.houses[10];
 
     const careerSignificators = {
-      Sun: 'Government, politics, leadership, administration',
-      Moon: 'Public relations, hospitality, nursing, maritime',
-      Mars: 'Engineering, military, surgery, sports, real estate',
-      Mercury: 'Business, communication, IT, accounting, writing',
-      Jupiter: 'Education, law, finance, consulting, spirituality',
-      Venus: 'Arts, entertainment, luxury goods, fashion, hospitality',
-      Saturn: 'Construction, agriculture, mining, labor, manufacturing'
+      Sun: lang === 'ml' ? 'സർക്കാർ, രാഷ്ട്രീയം, നേതൃത്വം, ഭരണം' : 'Government, politics, leadership, administration',
+      Moon: lang === 'ml' ? 'പബ്ലിക് റിലേഷൻസ്, ഹോസ്പിറ്റാലിറ്റി, നഴ്സിംഗ്, നാവികം' : 'Public relations, hospitality, nursing, maritime',
+      Mars: lang === 'ml' ? 'എഞ്ചിനീയറിംഗ്, സൈന്യം, സർജറി, സ്പോർട്സ്, റിയൽ എസ്റ്റേറ്റ്' : 'Engineering, military, surgery, sports, real estate',
+      Mercury: lang === 'ml' ? 'ബിസിനസ്സ്, ആശയവിനിമയം, ഐടി, അക്കൗണ്ടിംഗ്, എഴുത്ത്' : 'Business, communication, IT, accounting, writing',
+      Jupiter: lang === 'ml' ? 'വിദ്യാഭ്യാസം, നിയമം, ധനകാര്യം, കൺസൾട്ടിംഗ്, ആത്മീയത' : 'Education, law, finance, consulting, spirituality',
+      Venus: lang === 'ml' ? 'കലകൾ, വിനോദം, ആഡംബര വസ്തുക്കൾ, ഫാഷൻ, ഹോസ്പിറ്റാലിറ്റി' : 'Arts, entertainment, luxury goods, fashion, hospitality',
+      Saturn: lang === 'ml' ? 'നിർമ്മാണം, കൃഷി, ഖനനം, തൊഴിൽ, മാനുഫാക്ചറിംഗ്' : 'Construction, agriculture, mining, labor, manufacturing'
     };
 
-    const fields = careerSignificators[lord10] || 'Diverse fields';
+    const fields = careerSignificators[lord10] || (lang === 'ml' ? 'വിവിധ മേഖലകൾ' : 'Diverse fields');
     const isStrong = lord10Data.dignity !== 'Debilitated' && lord10Data.dignity !== 'Enemy';
     const inKendra = [1, 4, 7, 10].includes(lord10Data.house);
     const inTrikona = [1, 5, 9].includes(lord10Data.house);
 
-    let trajectory = 'Steady';
-    let recognition = 'Normal Recognition';
-    let financialGain = 'Standard Income';
+    let trajectory = lang === 'ml' ? 'സ്ഥിരതയുള്ള' : 'Steady';
+    let recognition = lang === 'ml' ? 'സാധാരണ അംഗീകാരം' : 'Normal Recognition';
+    let financialGain = lang === 'ml' ? 'സാധാരണ വരുമാനം' : 'Standard Income';
 
     if (isStrong && (inKendra || inTrikona)) {
-      trajectory = 'Strong upward trajectory';
-      recognition = 'Strong Recognition (delayed)';
-      financialGain = 'Great Financial Gain from Work';
+      trajectory = lang === 'ml' ? 'ശക്തമായ മുകളിലേക്കുള്ള പ്രയാണം' : 'Strong upward trajectory';
+      recognition = lang === 'ml' ? 'ശക്തമായ അംഗീകാരം (വൈകി ലഭിച്ചേക്കാം)' : 'Strong Recognition (delayed)';
+      financialGain = lang === 'ml' ? 'ജോലിയിൽ നിന്ന് മികച്ച സാമ്പത്തിക നേട്ടം' : 'Great Financial Gain from Work';
     } else if (isStrong) {
-      trajectory = 'Steady growth with effort';
-      recognition = 'Moderate Recognition';
+      trajectory = lang === 'ml' ? 'പരിശ്രമത്തിലൂടെയുള്ള സ്ഥിരമായ വളർച്ച' : 'Steady growth with effort';
+      recognition = lang === 'ml' ? 'മിതമായ അംഗീകാരം' : 'Moderate Recognition';
     } else {
-      trajectory = 'Growth after overcoming initial challenges';
+      trajectory = lang === 'ml' ? 'തുടക്കത്തിലെ പ്രതിസന്ധികൾ മറികടന്നുള്ള വളർച്ച' : 'Growth after overcoming initial challenges';
     }
 
     let specificFields = fields;
@@ -283,10 +390,10 @@ const Interpretation = (() => {
        }
     });
 
-    const educationTags = interpretEducation(chart);
+    const educationTags = interpretEducation(chart, lang);
 
     return {
-      title: 'The Path of Vocation',
+      title: lang === 'ml' ? 'തൊഴിൽ മാർഗ്ഗം' : 'The Path of Vocation',
       tenthLord: `${lord10} in ${lord10Data.rasi.name} (House ${lord10Data.house})`,
       tenthLordDignity: lord10Data.dignity,
       occupants: house10.occupants,
@@ -301,7 +408,7 @@ const Interpretation = (() => {
   }
 
   // ─── Wealth Interpretation ────────────────────────────────
-  function interpretWealth(chart, ashtakavargaResult) {
+  function interpretWealth(chart, ashtakavargaResult, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord2 = VedicCore.getLordOf(2, lagna);
     const lord11 = VedicCore.getLordOf(11, lagna);
@@ -316,17 +423,19 @@ const Interpretation = (() => {
     const jupiterAspects2 = chart.planets.Jupiter.aspects.includes(2);
 
     return {
-      title: 'Material Abundance',
+      title: lang === 'ml' ? 'ഭൗതിക സമൃദ്ധി' : 'Material Abundance',
       secondLord: `${lord2} in ${lord2Data.rasi.name} (House ${lord2Data.house}, ${lord2Data.dignity})`,
       eleventhLord: `${lord11} in ${lord11Data.rasi.name} (House ${lord11Data.house}, ${lord11Data.dignity})`,
-      jupiterAspect: jupiterAspects2 ? 'Jupiter aspects 2nd house — stable wealth growth' : 'No Jupiter aspect on 2nd house',
+      jupiterAspect: jupiterAspects2 ? (lang === 'ml' ? 'വ്യാഴദൃഷ്ടി രണ്ടാം ഭാവത്തിൽ — സുസ്ഥിര സമ്പത്ത്' : 'Jupiter aspects 2nd house — stable wealth growth') : (lang === 'ml' ? 'രണ്ടാം ഭാവത്തിൽ വ്യാഴദൃഷ്ടിയില്ല' : 'No Jupiter aspect on 2nd house'),
       house2SAV: house2Strength ? `${house2Strength.bindus} bindus (${house2Strength.rating})` : 'N/A',
       house11SAV: house11Strength ? `${house11Strength.bindus} bindus (${house11Strength.rating})` : 'N/A',
       overall: (lord2Data.dignity !== 'Debilitated' && lord11Data.dignity !== 'Debilitated')
-        ? 'Positive wealth potential' : 'Wealth requires sustained effort'
+        ? (lang === 'ml' ? 'മികച്ച സാമ്പത്തിക സാധ്യതകൾ' : 'Positive wealth potential') 
+        : (lang === 'ml' ? 'സമ്പത്ത് നേടാൻ നിരന്തരമായ പരിശ്രമം ആവശ്യമാണ്' : 'Wealth requires sustained effort')
     };
   }
 
+  // ─── Remedies ─────────────────────────────────────────────
   // ─── Remedies ─────────────────────────────────────────────
   const PLANET_REMEDIES = {
     Sun:     { deity: 'Lord Surya / Aditya', temple: 'Suryanar Kovil', mantra: 'Om Suryaya Namaha', dana: 'Wheat, red sandalwood, ruby (cautiously)', day: 'Sunday', color: 'Red/Copper' },
@@ -340,34 +449,48 @@ const Interpretation = (() => {
     Ketu:    { deity: 'Lord Ganesha', temple: 'Keezhperumpallam', mantra: 'Om Ketave Namaha', dana: 'Sesame, blankets, cat\'s eye (cautiously)', day: 'Tuesday', color: 'Grey/Earthy' }
   };
 
-  function interpretRemedies(chart, yogaDoshaResults) {
+  const ML_PLANET_REMEDIES = {
+    Sun:     { deity: 'സൂര്യ ഭഗവാൻ', temple: 'സൂര്യനാർ കോവിൽ', mantra: 'ഓം സൂരയായ നമഹ', dana: 'ഗോതമ്പ്, രക്തചന്ദനം, മാണിക്യം (സൂക്ഷ്മതയോടെ)', day: 'ഞായർ', color: 'ചുവപ്പ്/ചെമ്പ്' },
+    Moon:    { deity: 'പരമശിവൻ / പാർവ്വതി ദേവി', temple: 'തിങ്കളൂർ / ചന്ദ്രേശ്വർ', mantra: 'ഓം ചന്ദ്രായ നമഹ', dana: 'വെളുത്ത അരി, വെള്ള വസ്ത്രം, മുത്ത് (സൂക്ഷ്മതയോടെ)', day: 'തിങ്കൾ', color: 'വെള്ള/വെള്ളി' },
+    Mars:    { deity: 'സുബ്രഹ്മണ്യ സ്വാമി / ഹനുമാൻ', temple: 'മുത്തപ്പൻ കാവ് / വൈത്തീശ്വരൻ കോവിൽ', mantra: 'ഓം മംഗളായ നമഹ / ഹനുമാൻ ചാലിസ', dana: 'ചുവന്ന പരിപ്പ്, ശർക്കര, പവിഴം (സൂക്ഷ്മതയോടെ)', day: 'ചൊവ്വ', color: 'ചുവപ്പ്' },
+    Mercury: { deity: 'മഹാവിഷ്ണു / ശ്രീകൃഷ്ണൻ', temple: 'തിരുവെൺകാട് / ശ്രീകൃഷ്ണ ക്ഷേത്രങ്ങൾ', mantra: 'ഓം ബുധായ നമഹ', dana: 'ചെറുപയർ, പച്ച വസ്ത്രം, മരതകം (സൂക്ഷ്മതയോടെ)', day: 'ബുധൻ', color: 'പച്ച' },
+    Jupiter: { deity: 'ദക്ഷിണാമൂർത്തി / ബൃഹസ്പതി', temple: 'ആലങ്കുടി', mantra: 'ഓം ഗുരവേ നമഹ / ഗുരു സ്തോത്രം', dana: 'മഞ്ഞ വസ്ത്രം, മഞ്ഞൾ, കടല, മഞ്ഞ പുഷ്യരാഗം (സൂക്ഷ്മതയോടെ)', day: 'വ്യാഴം', color: 'മഞ്ഞ' },
+    Venus:   { deity: 'മഹാലക്ഷ്മി / ദുർഗ്ഗാ ഭഗവതി', temple: 'കുടുംബി ഭഗവതി ക്ഷേത്രം', mantra: 'ഓം ശുക്രായ നമഹ', dana: 'വെള്ള വസ്ത്രം, വെള്ളി, അരി, വജ്രം (സൂക്ഷ്മതയോടെ)', day: 'വെള്ളി', color: 'വെള്ള/ഇളം നിറങ്ങൾ' },
+    Saturn:  { deity: 'ശനി ഭഗവാൻ / അയ്യപ്പ സ്വാമി', temple: 'തിരുനள்ளார் / ശനീശ്വര ക്ഷേത്രങ്ങൾ', mantra: 'ഓം ശനൈശ്ചരായ നമഹ', dana: 'എള്ളെണ്ണ, കറുത്ത വസ്ത്രം, ഇരുമ്പ്, നീലക്കല്ല് (സൂക്ഷ്മതയോടെ)', day: 'ശനി', color: 'കറുപ്പ്/കടും നീല' },
+    Rahu:    { deity: 'ദുർഗ്ഗാ ഭഗവതി / നാഗദേവതകൾ', temple: 'തിരുനാഗേശ്വരം / കാളഹസ്തി', mantra: 'ഓം രാഹവേ നമഹ', dana: 'ഉഴുന്ന്, തേങ്ങ, ഗോമേദകം (സൂക്ഷ്മതയോടെ)', day: 'ശനി', color: 'പുകനിറം/ചാരനിറം' },
+    Ketu:    { deity: 'ഗണപതി ഭഗവാൻ', temple: 'കീഴപെരുമ്പള്ളം', mantra: 'ഓം കേതവേ നമഹ', dana: 'എള്ള്, കമ്പിളി പുതപ്പ്, വൈഡൂര്യം (സൂക്ഷ്മതയോടെ)', day: 'ചൊവ്വ', color: 'ചാരനിറം/മൺനിറം' }
+  };
+
+  function interpretRemedies(chart, yogaDoshaResults, lang = 'en') {
     const remedies = [];
     const activeDoshas = yogaDoshaResults.doshas.filter(d =>
       d.present && d.strength !== 'Cancelled' && d.strength !== 'Cancelled/Mitigated' && d.strength !== 'Absent'
     );
 
+    const remediesDict = lang === 'ml' ? ML_PLANET_REMEDIES : PLANET_REMEDIES;
+
     // Remedies for active doshas
     for (const dosha of activeDoshas) {
       if (dosha.name === 'Manglik Dosha') {
         remedies.push({
-          for: 'Manglik Dosha Mitigation',
+          for: lang === 'ml' ? 'ചൊവ്വാ ദോഷ പരിഹാരങ്ങൾ' : 'Manglik Dosha Mitigation',
           practices: [
-            'Perform Mangal Puja or Navagraha Homam',
-            PLANET_REMEDIES.Mars.mantra + ' — 108 times on Tuesdays',
-            'Visit ' + PLANET_REMEDIES.Mars.temple,
-            'Offer red flowers to Lord Hanuman on Tuesdays',
-            'Practice selfless service (Seva)'
+            lang === 'ml' ? 'മംഗള പൂജ അല്ലെങ്കിൽ നവഗ്രഹ ഹോമം നടത്തുക' : 'Perform Mangal Puja or Navagraha Homam',
+            remediesDict.Mars.mantra + (lang === 'ml' ? ' — ചൊവ്വാഴ്ചകളിൽ 108 തവണ' : ' — 108 times on Tuesdays'),
+            (lang === 'ml' ? 'ദർശനം: ' : 'Visit ') + remediesDict.Mars.temple,
+            lang === 'ml' ? 'ചൊവ്വാഴ്ചകളിൽ ഹനുമാൻ സ്വാമിക്ക് ചുവന്ന പുഷ്പങ്ങൾ അർപ്പിക്കുക' : 'Offer red flowers to Lord Hanuman on Tuesdays',
+            lang === 'ml' ? 'നിസ്വാർത്ഥ സേവനം ശീലിക്കുക' : 'Practice selfless service (Seva)'
           ]
         });
       }
       if (dosha.name === 'Kala Sarpa Dosha') {
         remedies.push({
-          for: 'Kala Sarpa Dosha Mitigation (popular tradition)',
+          for: lang === 'ml' ? 'കാള സർപ്പ ദോഷ പരിഹാരങ്ങൾ' : 'Kala Sarpa Dosha Mitigation (popular tradition)',
           practices: [
-            'Kala Sarpa Dosha Puja at Srikalahasti or Trimbakeshwar',
-            'Rahu-Ketu Shanti Homam',
-            PLANET_REMEDIES.Rahu.mantra + ' — 108 times on Saturdays',
-            'Offer milk at a Naga temple on Naga Panchami'
+            lang === 'ml' ? 'ശ്രീകാളഹസ്തിയിലോ ത്രയംബകേശ്വറിലോ കാള സർപ്പ ദോഷ പൂജ നടത്തുക' : 'Kala Sarpa Dosha Puja at Srikalahasti or Trimbakeshwar',
+            lang === 'ml' ? 'രാഹു-കേതു ശാന്തി ഹോമം' : 'Rahu-Ketu Shanti Homam',
+            remediesDict.Rahu.mantra + (lang === 'ml' ? ' — ശനിയാഴ്ചകളിൽ 108 തവണ' : ' — 108 times on Saturdays'),
+            lang === 'ml' ? 'നാഗപഞ്ചമി ദിനത്തിൽ നാഗക്ഷേത്രത്തിൽ പാൽ അർപ്പിക്കുക' : 'Offer milk at a Naga temple on Naga Panchami'
           ]
         });
       }
@@ -376,16 +499,16 @@ const Interpretation = (() => {
     // Remedies for weak/afflicted planets
     for (const [planet, pData] of Object.entries(chart.planets)) {
       if (pData.dignity === 'Debilitated' || pData.dignity === 'Enemy') {
-        const rem = PLANET_REMEDIES[planet];
+        const rem = remediesDict[planet];
         if (rem) {
           remedies.push({
-            for: `Strengthen ${planet} (${pData.dignity} in ${pData.rasi.name})`,
+            for: lang === 'ml' ? `${window.i18n.t(planet)} ബലപ്പെടുത്തുക (${window.i18n.t(pData.dignity)} - ${window.i18n.t(pData.rasi.name)})` : `Strengthen ${planet} (${pData.dignity} in ${pData.rasi.name})`,
             practices: [
-              `Worship ${rem.deity} on ${rem.day}s`,
-              `Chant ${rem.mantra} — 108 times`,
-              `Visit ${rem.temple}`,
-              `Dana: ${rem.dana}`,
-              `Wear ${rem.color} on ${rem.day}s`
+              lang === 'ml' ? `${rem.day}ാഴ്ചകളിൽ ${rem.deity}യെ ആരാധിക്കുക` : `Worship ${rem.deity} on ${rem.day}s`,
+              lang === 'ml' ? `${rem.mantra} — 108 തവണ ജപിക്കുക` : `Chant ${rem.mantra} — 108 times`,
+              (lang === 'ml' ? 'ദർശനം: ' : 'Visit ') + rem.temple,
+              (lang === 'ml' ? 'ദാനം: ' : 'Dana: ') + rem.dana,
+              lang === 'ml' ? `${rem.day}ാഴ്ചകളിൽ ${rem.color} വസ്ത്രം ധരിക്കുക` : `Wear ${rem.color} on ${rem.day}s`
             ]
           });
         }
@@ -395,13 +518,13 @@ const Interpretation = (() => {
     // Sade Sati remedies
     if (yogaDoshaResults.sadeSati && yogaDoshaResults.sadeSati.active) {
       remedies.push({
-        for: 'Sade Sati Mitigation',
+        for: lang === 'ml' ? 'ഏഴര ശനി ദോഷ പരിഹാരങ്ങൾ' : 'Sade Sati Mitigation',
         practices: [
-          'Light sesame oil lamps at Shani/Ayyappa temple on Saturdays',
-          PLANET_REMEDIES.Saturn.mantra + ' — 108 times',
-          'Recite Hanuman Chalisa on Tuesdays and Saturdays',
-          'Practice discipline, patience, and selfless service',
-          'Donate black sesame, iron, or dark cloth on Saturdays'
+          lang === 'ml' ? 'ശനിയാഴ്ചകളിൽ ശനി/അയ്യപ്പ ക്ഷേത്രത്തിൽ എള്ളെണ്ണ വിളക്ക് കത്തിക്കുക' : 'Light sesame oil lamps at Shani/Ayyappa temple on Saturdays',
+          remediesDict.Saturn.mantra + (lang === 'ml' ? ' — 108 തവണ ജപിക്കുക' : ' — 108 times'),
+          lang === 'ml' ? 'ചൊവ്വ, ശനി ദിവസങ്ങളിൽ ഹനുമാൻ ചാലിസ ജപിക്കുക' : 'Recite Hanuman Chalisa on Tuesdays and Saturdays',
+          lang === 'ml' ? 'അച്ചടക്കം, ക്ഷമ, നിസ്വാർത്ഥ സേവനം എന്നിവ ശീലിക്കുക' : 'Practice discipline, patience, and selfless service',
+          lang === 'ml' ? 'ശനിയാഴ്ചകളിൽ കറുത്ത എള്ള്, ഇരുമ്പ് അല്ലെങ്കിൽ കറുത്ത വസ്ത്രം ദാനം ചെയ്യുക' : 'Donate black sesame, iron, or dark cloth on Saturdays'
         ]
       });
     }
@@ -411,13 +534,13 @@ const Interpretation = (() => {
     const element = lagnaRasi % 4; // 0=Fire, 1=Earth, 2=Air, 3=Water
     
     let behavioralPractices = [];
-    if (element === 0) behavioralPractices = ['Practice patience and anger management', 'Channel excess energy into physical exercise', 'Avoid impulsive decisions'];
-    else if (element === 1) behavioralPractices = ['Embrace change and flexibility', 'Avoid stubbornness', 'Practice generosity and detachment from material things'];
-    else if (element === 2) behavioralPractices = ['Ground yourself with nature walks', 'Focus on one task at a time to avoid mental scattering', 'Practice regular meditation'];
-    else if (element === 3) behavioralPractices = ['Set healthy emotional boundaries', 'Avoid over-attachment and emotional dependency', 'Engage in creative or artistic expression'];
+    if (element === 0) behavioralPractices = lang === 'ml' ? ['ക്ഷമയും കോപ നിയന്ത്രണവും ശീലിക്കുക', 'അമിതമായ ഊർജ്ജം വ്യായാമത്തിനായി വിനിയോഗിക്കുക', 'എടുത്തുചാടിയുള്ള തീരുമാനങ്ങൾ ഒഴിവാക്കുക'] : ['Practice patience and anger management', 'Channel excess energy into physical exercise', 'Avoid impulsive decisions'];
+    else if (element === 1) behavioralPractices = lang === 'ml' ? ['മാറ്റങ്ങളെയും വഴക്കത്തെയും ഉൾക്കൊള്ളുക', 'കടുംപിടുത്തം ഒഴിവാക്കുക', 'ഭൗതിക കാര്യങ്ങളോടുള്ള അമിത താല്പര്യം കുറയ്ക്കുക'] : ['Embrace change and flexibility', 'Avoid stubbornness', 'Practice generosity and detachment from material things'];
+    else if (element === 2) behavioralPractices = lang === 'ml' ? ['പ്രകൃതിയുമായി ഇണങ്ങി ജീവിക്കുക', 'മാനസിക ചാഞ്ചാട്ടം ഒഴിവാക്കാൻ ഒരേ സമയം ഒരു കാര്യത്തിൽ ശ്രദ്ധിക്കുക', 'സ്ഥിരമായി ധ്യാനിക്കുക'] : ['Ground yourself with nature walks', 'Focus on one task at a time to avoid mental scattering', 'Practice regular meditation'];
+    else if (element === 3) behavioralPractices = lang === 'ml' ? ['വൈകാരിക അതിരുകൾ നിശ്ചയിക്കുക', 'അമിതമായ വൈകാരിക ആശ്രിതത്വം ഒഴിവാക്കുക', 'കലാപരമായ പ്രവർത്തനങ്ങളിൽ ഏർപ്പെടുക'] : ['Set healthy emotional boundaries', 'Avoid over-attachment and emotional dependency', 'Engage in creative or artistic expression'];
 
     remedies.push({
-      for: 'Personal/Behavioral Remedies (Based on Ascendant Element)',
+      for: lang === 'ml' ? 'പെരുമാറ്റപരമായ മാറ്റങ്ങൾ (ലഗ്ന അടിസ്ഥാനത്തിൽ)' : 'Personal/Behavioral Remedies (Based on Ascendant Element)',
       practices: behavioralPractices
     });
 
@@ -442,7 +565,7 @@ const Interpretation = (() => {
    * Generate the 3 "High-Probability Predictions" insight cards.
    * Based on current Dasha activation + SAV strength + yogas.
    */
-  function generateInsights(chart, dashaResult, ashtakavargaResult, yogaDoshaResults) {
+  function generateInsights(chart, dashaResult, ashtakavargaResult, yogaDoshaResults, lang = 'en') {
     const insights = [];
     const currentDasha = dashaResult;
 
@@ -453,10 +576,10 @@ const Interpretation = (() => {
     const lord10Data = chart.planets[lord10];
     const careerScore = calculateDomainScore(10, lord10Data, house10Strength, currentDasha, lord10);
 
-    let careerKw = 'Steady Career Effort';
+    let careerKw = lang === 'ml' ? 'സ്ഥിരമായ തൊഴിൽ നേട്ടം' : 'Steady Career Effort';
     let careerIcon = 'Briefcase';
-    if (careerScore >= 75) { careerKw = 'High Career Growth'; careerIcon = 'TrendingUp'; }
-    else if (careerScore < 40) { careerKw = 'Career Challenges'; careerIcon = 'AlertTriangle'; }
+    if (careerScore >= 75) { careerKw = lang === 'ml' ? 'മികച്ച തൊഴിൽ വളർച്ച' : 'High Career Growth'; careerIcon = 'TrendingUp'; }
+    else if (careerScore < 40) { careerKw = lang === 'ml' ? 'തൊഴിലിൽ തടസ്സങ്ങൾ' : 'Career Challenges'; careerIcon = 'AlertTriangle'; }
 
     insights.push({
       id: 1,
@@ -472,10 +595,10 @@ const Interpretation = (() => {
     const lord2Data = chart.planets[lord2];
     const financeScore = calculateDomainScore(2, lord2Data, house2Strength, currentDasha, lord2);
 
-    let finKw = 'Financial Discipline';
+    let finKw = lang === 'ml' ? 'സാമ്പത്തിക അച്ചടക്കം' : 'Financial Discipline';
     let finIcon = 'Coins';
-    if (financeScore >= 75) { finKw = 'Wealth Accumulation'; finIcon = 'Activity'; }
-    else if (financeScore < 40) { finKw = 'Financial Restraints'; finIcon = 'AlertTriangle'; }
+    if (financeScore >= 75) { finKw = lang === 'ml' ? 'സമ്പത്ത് വർദ്ധനവ്' : 'Wealth Accumulation'; finIcon = 'Activity'; }
+    else if (financeScore < 40) { finKw = lang === 'ml' ? 'സാമ്പത്തിക ബുദ്ധിമുട്ടുകൾ' : 'Financial Restraints'; finIcon = 'AlertTriangle'; }
 
     insights.push({
       id: 2,
@@ -493,10 +616,10 @@ const Interpretation = (() => {
     const lagnaLordData = chart.planets[lagnaLord];
     const healthScore = calculateHealthScore(lagnaLordData, house1Strength, house6Strength);
 
-    let healthKw = 'Health Routines Required';
+    let healthKw = lang === 'ml' ? 'കൃത്യമായ ആരോഗ്യ ദിനചര്യകൾ ആവശ്യമാണ്' : 'Health Routines Required';
     let healthIcon = 'Activity';
-    if (healthScore >= 75) { healthKw = 'Strong Vitality'; healthIcon = 'Heart'; }
-    else if (healthScore < 40) { healthKw = 'Health Vulnerabilities'; healthIcon = 'ShieldAlert'; }
+    if (healthScore >= 75) { healthKw = lang === 'ml' ? 'മികച്ച ആരോഗ്യവും ഊർജ്ജസ്വലതയും' : 'Strong Vitality'; healthIcon = 'Heart'; }
+    else if (healthScore < 40) { healthKw = lang === 'ml' ? 'ആരോഗ്യ കാര്യങ്ങളിൽ പ്രത്യേകം ശ്രദ്ധിക്കണം' : 'Health Vulnerabilities'; healthIcon = 'ShieldAlert'; }
 
     insights.push({
       id: 3,
@@ -583,24 +706,26 @@ const Interpretation = (() => {
   }
 
   // ─── Core Data Panel ──────────────────────────────────────
-  function generateCoreData(chart, panchanga, currentDasha) {
+  function generateCoreData(chart, panchanga, currentDasha, lang = 'en') {
     const moonRasi = chart.planets.Moon.rasi;
     const moonNak = chart.planets.Moon.nakshatra;
+    
+    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key, lang) : key;
 
     return {
-      janmaRasi: `${moonRasi.name} (${moonRasi.eng})`,
-      janmaNakshatra: `${moonNak.name} (Pada ${moonNak.pada})`,
-      lagnam: `${chart.lagnaRasi.name} (${chart.lagnaRasi.eng})`,
-      tithi: panchanga.tithi.name,
-      currentDasha: currentDasha ? currentDasha.summary : 'N/A',
-      vara: panchanga.vara.eng,
-      yoga: panchanga.yoga.name,
-      karana: panchanga.karana.name
+      janmaRasi: `${t(moonRasi.name)} (${t(moonRasi.eng)})`,
+      janmaNakshatra: `${t(moonNak.name)} (Pada ${moonNak.pada})`,
+      lagnam: `${t(chart.lagnaRasi.name)} (${t(chart.lagnaRasi.eng)})`,
+      tithi: t(panchanga.tithi.name),
+      currentDasha: currentDasha ? t(currentDasha.summary) : 'N/A',
+      vara: t(panchanga.vara.eng),
+      yoga: t(panchanga.yoga.name),
+      karana: t(panchanga.karana.name)
     };
   }
 
   // ─── Key Life Predictions (Marriage, Children, Travel) ────
-  function interpretMarriage(chart) {
+  function interpretMarriage(chart, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord7 = VedicCore.getLordOf(7, lagna);
     const lord7Data = chart.planets[lord7];
@@ -608,57 +733,57 @@ const Interpretation = (() => {
     const lord5Data = chart.planets[lord5];
     const venusData = chart.planets.Venus;
 
-    let timing = 'Normal (Expected timeframe)';
+    let timing = lang === 'ml' ? 'സാധാരണ സമയം' : 'Normal (Expected timeframe)';
     if (lord7Data.house === 6 || lord7Data.house === 8 || lord7Data.house === 12 || lord7Data.dignity === 'Debilitated' || chart.planets.Saturn.aspects.includes(7)) {
-      timing = 'Possible delays or obstacles; patience required';
+      timing = lang === 'ml' ? 'കാലതാമസമോ തടസ്സങ്ങളോ ഉണ്ടാകാം; ക്ഷമ ആവശ്യമാണ്' : 'Possible delays or obstacles; patience required';
     } else if (lord7Data.house === 1 || lord7Data.house === 7 || venusData.dignity === 'Exalted') {
-      timing = 'Early or timely marriage indicated';
+      timing = lang === 'ml' ? 'നേരത്തെയുള്ള അല്ലെങ്കിൽ കൃത്യസമയത്തുള്ള വിവാഹം' : 'Early or timely marriage indicated';
     }
 
-    let type = 'Arranged/Traditional';
+    let type = lang === 'ml' ? 'നിശ്ചയിച്ചുറപ്പിച്ച വിവാഹം' : 'Arranged/Traditional';
     // 5th lord (romance) connected to 7th lord (marriage)
     if (lord5Data.house === 7 || lord7Data.house === 5 || lord5Data.house === lord7Data.house || chart.planets.Rahu.house === 7 || chart.planets.Rahu.house === 5) {
-      type = 'Love or Love-cum-arranged';
+      type = lang === 'ml' ? 'പ്രണയവിവാഹം / പ്രണയത്തോടെ നിശ്ചയിച്ച വിവാഹം' : 'Love or Love-cum-arranged';
     }
 
     // Partner traits based on 7th lord planet
     const traitsMap = {
-      Sun: ['Authoritative', 'Confident', 'Leadership'],
-      Moon: ['Nurturing', 'Emotional', 'Caring'],
-      Mars: ['Active', 'Assertive', 'Independent'],
-      Mercury: ['Intellectual', 'Communicative', 'Youthful'],
-      Jupiter: ['Highly Educated', 'Spiritual', 'Values'],
-      Venus: ['Attractive', 'Artistic', 'Harmonious'],
-      Saturn: ['Mature', 'Disciplined', 'Grounded']
+      Sun: lang === 'ml' ? ['അധികാരമുള്ള', 'ആത്മവിശ്വാസമുള്ള', 'നേതൃത്വഗുണമുള്ള'] : ['Authoritative', 'Confident', 'Leadership'],
+      Moon: lang === 'ml' ? ['പരിപാലിക്കുന്ന', 'വൈകാരികതയുള്ള', 'കരുതലുള്ള'] : ['Nurturing', 'Emotional', 'Caring'],
+      Mars: lang === 'ml' ? ['കർമ്മനിരതനായ', 'ധീരനായ', 'സ്വതന്ത്രനായ'] : ['Active', 'Assertive', 'Independent'],
+      Mercury: lang === 'ml' ? ['ബുദ്ധിമാനായ', 'സംസാരപ്രിയനായ', 'ചെറുപ്പമുള്ള'] : ['Intellectual', 'Communicative', 'Youthful'],
+      Jupiter: lang === 'ml' ? ['ഉന്നത വിദ്യാഭ്യാസമുള്ള', 'ആത്മീയതയുള്ള', 'മൂല്യങ്ങളുള്ള'] : ['Highly Educated', 'Spiritual', 'Values'],
+      Venus: lang === 'ml' ? ['ആകർഷകമായ', 'കലാപരമായ', 'സന്തുലിതമായ'] : ['Attractive', 'Artistic', 'Harmonious'],
+      Saturn: lang === 'ml' ? ['പക്വതയുള്ള', 'അച്ചടക്കമുള്ള', 'യാഥാർത്ഥ്യബോധമുള്ള'] : ['Mature', 'Disciplined', 'Grounded']
     };
-    let partnerTraits = traitsMap[lord7] || ['Supportive'];
+    let partnerTraits = traitsMap[lord7] || (lang === 'ml' ? ['പിന്തുണയ്ക്കുന്ന'] : ['Supportive']);
 
     return { timing, type, partnerTraits };
   }
 
-  function interpretChildren(chart) {
+  function interpretChildren(chart, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord5 = VedicCore.getLordOf(5, lagna);
     const lord5Data = chart.planets[lord5];
     const jupiterData = chart.planets.Jupiter;
 
     if (lord5Data.house === 6 || lord5Data.house === 8 || lord5Data.house === 12 || lord5Data.dignity === 'Debilitated') {
-      return 'Requires careful planning; possible delays';
+      return lang === 'ml' ? 'ശ്രദ്ധാപൂർവ്വമായ ആസൂത്രണം ആവശ്യമാണ്; കാലതാമസം ഉണ്ടായേക്കാം' : 'Requires careful planning; possible delays';
     } else if (jupiterData.dignity === 'Exalted' || jupiterData.dignity === 'Own' || lord5Data.dignity === 'Exalted' || lord5Data.dignity === 'Own') {
-      return 'Highly favorable prospects for children';
+      return lang === 'ml' ? 'മികച്ച സന്താന ഭാഗ്യം' : 'Highly favorable prospects for children';
     }
-    return 'Favorable; standard prospects';
+    return lang === 'ml' ? 'സാധാരണ സന്താന ഭാഗ്യം' : 'Favorable; standard prospects';
   }
 
-  function interpretFinance(chart) {
+  function interpretFinance(chart, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord2 = VedicCore.getLordOf(2, lagna);
     const lord11 = VedicCore.getLordOf(11, lagna);
     const lord2Data = chart.planets[lord2];
     const lord11Data = chart.planets[lord11];
     
-    let title = 'Steady Financial Growth';
-    let description = 'Standard income channels; focus on consistent savings.';
+    let title = lang === 'ml' ? 'സ്ഥിരമായ സാമ്പത്തിക വളർച്ച' : 'Steady Financial Growth';
+    let description = lang === 'ml' ? 'സാധാരണ വരുമാന മാർഗ്ഗങ്ങൾ; സമ്പാദ്യത്തിൽ ശ്രദ്ധ കേന്ദ്രീകരിക്കുക.' : 'Standard income channels; focus on consistent savings.';
     
     let score = 0;
     if (lord2Data.house === 2 || lord2Data.house === 11 || lord11Data.house === 2 || lord11Data.house === 11) score += 3;
@@ -666,17 +791,17 @@ const Interpretation = (() => {
     if (lord2Data.house === 6 || lord2Data.house === 8 || lord2Data.house === 12) score -= 2;
     
     if (score >= 3) {
-      title = 'Strong Wealth & Dhana Yoga';
-      description = 'Excellent potential for asset building, investments, and passive income sources.';
+      title = lang === 'ml' ? 'ശക്തമായ ധനയോഗം' : 'Strong Wealth & Dhana Yoga';
+      description = lang === 'ml' ? 'സമ്പത്ത് വർദ്ധിപ്പിക്കാനും നിക്ഷേപങ്ങൾക്കും മികച്ച സാധ്യതകൾ.' : 'Excellent potential for asset building, investments, and passive income sources.';
     } else if (score < 0) {
-      title = 'Financial Fluctuations';
-      description = 'Expenses may match income; avoid highly speculative investments.';
+      title = lang === 'ml' ? 'സാമ്പത്തിക ഏറ്റക്കുറച്ചിലുകൾ' : 'Financial Fluctuations';
+      description = lang === 'ml' ? 'ചെലവുകൾ വരുമാനത്തിന് തുല്യമാകാം; വലിയ നിക്ഷേപങ്ങൾ ഒഴിവാക്കുക.' : 'Expenses may match income; avoid highly speculative investments.';
     }
     
     return { title, description };
   }
 
-  function interpretTravel(chart) {
+  function interpretTravel(chart, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord9 = VedicCore.getLordOf(9, lagna);
     const lord12 = VedicCore.getLordOf(12, lagna);
@@ -684,29 +809,29 @@ const Interpretation = (() => {
     const lord12Data = chart.planets[lord12];
     
     if (lord9Data.house === 9 || lord9Data.house === 12 || lord12Data.house === 9 || lord12Data.house === 12) {
-      return 'Strong indications for foreign travel or settlement';
+      return lang === 'ml' ? 'വിദേശ യാത്രയ്ക്കോ വിദേശത്ത് സ്ഥിരതാമസമാക്കാനോ ഉള്ള ശക്തമായ സാധ്യതകൾ' : 'Strong indications for foreign travel or settlement';
     } else if (lord9Data.dignity === 'Exalted' || lord12Data.dignity === 'Exalted') {
-      return 'Highly favorable for long-distance travel';
+      return lang === 'ml' ? 'ദൂരയാത്രകൾക്ക് വളരെ അനുകൂലമായ സമയം' : 'Highly favorable for long-distance travel';
     }
-    return 'Moderate travel prospects based on current planetary periods';
+    return lang === 'ml' ? 'ഗ്രഹങ്ങളുടെ നിലവിലെ ദശാകാലം അടിസ്ഥാനമാക്കിയുള്ള സാധാരണ യാത്രാ സാധ്യതകൾ' : 'Moderate travel prospects based on current planetary periods';
   }
 
   // ─── Detailed Health Cautions ─────────────────────────────
-  function interpretHealthDetails(chart) {
+  function interpretHealthDetails(chart, lang = 'en') {
     // Body parts mapped to signs (0=Aries...11=Pisces)
     const bodyMap = {
-      0: { text: 'Head/Brain', icon: 'Brain' },
-      1: { text: 'Throat/Face', icon: 'Activity' },
-      2: { text: 'Arms/Lungs', icon: 'Wind' },
-      3: { text: 'Chest/Heart', icon: 'Heart' },
-      4: { text: 'Stomach/Heart', icon: 'Activity' },
-      5: { text: 'Intestines/Gastric', icon: 'Flame' },
-      6: { text: 'Kidneys/Lower Back', icon: 'Activity' },
-      7: { text: 'Reproductive', icon: 'Activity' },
-      8: { text: 'Thighs/Hips', icon: 'Activity' },
-      9: { text: 'Knees/Joints', icon: 'Activity' },
-      10: { text: 'Calves/Nerves', icon: 'Activity' },
-      11: { text: 'Feet/Immunity', icon: 'ShieldAlert' }
+      0: { text: lang === 'ml' ? 'തല/തലച്ചോറ്' : 'Head/Brain', icon: 'Brain' },
+      1: { text: lang === 'ml' ? 'തൊണ്ട/മുഖം' : 'Throat/Face', icon: 'Activity' },
+      2: { text: lang === 'ml' ? 'കൈകൾ/ശ്വാസകോശം' : 'Arms/Lungs', icon: 'Wind' },
+      3: { text: lang === 'ml' ? 'നെഞ്ച്/ഹൃദയം' : 'Chest/Heart', icon: 'Heart' },
+      4: { text: lang === 'ml' ? 'വയറ്/ഹൃദയം' : 'Stomach/Heart', icon: 'Activity' },
+      5: { text: lang === 'ml' ? 'കുടൽ/ഗ്യാസ്ട്രിക്' : 'Intestines/Gastric', icon: 'Flame' },
+      6: { text: lang === 'ml' ? 'വൃക്കകൾ/നടുവേദന' : 'Kidneys/Lower Back', icon: 'Activity' },
+      7: { text: lang === 'ml' ? 'പ്രത്യുൽപാദന അവയവങ്ങൾ' : 'Reproductive', icon: 'Activity' },
+      8: { text: lang === 'ml' ? 'തുടകൾ/ഇടുപ്പ്' : 'Thighs/Hips', icon: 'Activity' },
+      9: { text: lang === 'ml' ? 'കാൽമുട്ടുകൾ/സന്ധികൾ' : 'Knees/Joints', icon: 'Activity' },
+      10: { text: lang === 'ml' ? 'കാലിലെ പേശികൾ/ഞരമ്പുകൾ' : 'Calves/Nerves', icon: 'Activity' },
+      11: { text: lang === 'ml' ? 'പാദങ്ങൾ/പ്രതിരോധശേഷി' : 'Feet/Immunity', icon: 'ShieldAlert' }
     };
 
     const lagna = chart.lagnaRasiIndex;
@@ -718,37 +843,37 @@ const Interpretation = (() => {
     
     // Add specific planetary vulnerabilities based on 6th lord
     const lord6 = VedicCore.getLordOf(6, lagna);
-    if (lord6 === 'Mars') vulnerabilities.push({ text: 'Inflammation/Heat', icon: 'Flame' });
-    if (lord6 === 'Mercury') vulnerabilities.push({ text: 'Nervous System', icon: 'Brain' });
-    if (lord6 === 'Venus') vulnerabilities.push({ text: 'Sugar/Skin', icon: 'Sparkles' });
-    if (lord6 === 'Saturn') vulnerabilities.push({ text: 'Chronic/Bones', icon: 'Activity' });
-    if (lord6 === 'Moon') vulnerabilities.push({ text: 'Mental Stress', icon: 'Brain' });
+    if (lord6 === 'Mars') vulnerabilities.push({ text: lang === 'ml' ? 'ശരീരത്തിലെ ചൂട്/വീക്കം' : 'Inflammation/Heat', icon: 'Flame' });
+    if (lord6 === 'Mercury') vulnerabilities.push({ text: lang === 'ml' ? 'നാഡീവ്യൂഹം' : 'Nervous System', icon: 'Brain' });
+    if (lord6 === 'Venus') vulnerabilities.push({ text: lang === 'ml' ? 'പ്രമേഹം/ചർമ്മം' : 'Sugar/Skin', icon: 'Sparkles' });
+    if (lord6 === 'Saturn') vulnerabilities.push({ text: lang === 'ml' ? 'വിട്ടുമാറാത്ത രോഗങ്ങൾ/അസ്ഥികൾ' : 'Chronic/Bones', icon: 'Activity' });
+    if (lord6 === 'Moon') vulnerabilities.push({ text: lang === 'ml' ? 'മാനസിക സമ്മർദ്ദം' : 'Mental Stress', icon: 'Brain' });
     
     // Behavioral cautions based on Moon (mind) and Lagna (body)
     const behavioral = [];
     if (chart.planets.Moon.dignity === 'Debilitated' || chart.planets.Saturn.aspects.includes(chart.planets.Moon.house)) {
-      behavioral.push({ text: 'Avoid Overthinking', icon: 'Brain' });
+      behavioral.push({ text: lang === 'ml' ? 'അമിത ചിന്ത ഒഴിവാക്കുക' : 'Avoid Overthinking', icon: 'Brain' });
     }
     if (chart.planets.Mars.dignity === 'Debilitated' || chart.planets.Mars.house === 6) {
-      behavioral.push({ text: 'Avoid Conflict', icon: 'Ban' });
+      behavioral.push({ text: lang === 'ml' ? 'തർക്കങ്ങൾ ഒഴിവാക്കുക' : 'Avoid Conflict', icon: 'Ban' });
     }
     if (behavioral.length === 0) {
-      behavioral.push({ text: 'Maintain Routine', icon: 'Calendar' });
-      behavioral.push({ text: 'Mindful Eating', icon: 'Activity' });
+      behavioral.push({ text: lang === 'ml' ? 'കൃത്യമായ ദിനചര്യ പാലിക്കുക' : 'Maintain Routine', icon: 'Calendar' });
+      behavioral.push({ text: lang === 'ml' ? 'ആരോഗ്യകരമായ ഭക്ഷണം' : 'Mindful Eating', icon: 'Activity' });
     }
 
-    const cautions = ['Work-life balance', 'Manage stress levels proactively'];
+    const cautions = lang === 'ml' ? ['ജോലിയും ജീവിതവും തമ്മിലുള്ള സന്തുലിതാവസ്ഥ', 'മാനസിക സമ്മർദ്ദം നിയന്ത്രിക്കുക'] : ['Work-life balance', 'Manage stress levels proactively'];
 
     return { vulnerabilities: vulnerabilities.slice(0,4), behavioral: behavioral.slice(0,2), cautions };
   }
 
-  function generateLifePredictions(chart, dashaResult) {
+  function generateLifePredictions(chart, dashaResult, lang = 'en') {
     return {
-      finance: interpretFinance(chart),
-      marriage: interpretMarriage(chart),
-      children: interpretChildren(chart),
-      travel: interpretTravel(chart),
-      health: interpretHealthDetails(chart)
+      finance: interpretFinance(chart, lang),
+      marriage: interpretMarriage(chart, lang),
+      children: interpretChildren(chart, lang),
+      travel: interpretTravel(chart, lang),
+      health: interpretHealthDetails(chart, lang)
     };
   }
 

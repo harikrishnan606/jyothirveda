@@ -20,6 +20,7 @@
     }
     </script>
     <!-- Load calculation modules -->
+    <script src="js/i18n.js?v=1"></script>
     <script src="js/astro-engine.js?v=6"></script>
     <script src="js/vedic-core.js?v=2"></script>
     <script src="js/panchanga.js?v=2"></script>
@@ -45,7 +46,7 @@ import {
 const ICON_MAP = { Briefcase, Activity, Heart, Star, Award, ShieldAlert, Sparkles, AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen, Target, HandMetal, Flame, Ban, Coins, Brain, User };
 
 // ─── Master Computation ────────────────────────────────────
-function computeChart(formData) {
+function computeChart(formData, lang = 'en') {
   try {
     const [year, month, day] = formData.dob.split('-').map(Number);
     const [hour, minute] = formData.time.split(':').map(Number);
@@ -103,13 +104,13 @@ function computeChart(formData) {
     const ashtakavargaResult = Ashtakavarga.compute(chart);
 
     // 9. Interpretations
-    const personality = Interpretation.interpretPersonality(chart, yogaDoshaResults);
-    const career = Interpretation.interpretCareer(chart);
-    const wealth = Interpretation.interpretWealth(chart, ashtakavargaResult);
-    const remedies = Interpretation.interpretRemedies(chart, yogaDoshaResults);
-    const insights = Interpretation.generateInsights(chart, currentDasha, ashtakavargaResult, yogaDoshaResults);
-    const coreData = Interpretation.generateCoreData(chart, panchanga, currentDasha);
-    const lifePredictions = Interpretation.generateLifePredictions(chart, currentDasha);
+    const personality = Interpretation.interpretPersonality(chart, yogaDoshaResults, lang);
+    const career = Interpretation.interpretCareer(chart, lang);
+    const wealth = Interpretation.interpretWealth(chart, ashtakavargaResult, lang);
+    const remedies = Interpretation.interpretRemedies(chart, yogaDoshaResults, lang);
+    const insights = Interpretation.generateInsights(chart, currentDasha, ashtakavargaResult, yogaDoshaResults, lang);
+    const coreData = Interpretation.generateCoreData(chart, panchanga, currentDasha, lang);
+    const lifePredictions = Interpretation.generateLifePredictions(chart, currentDasha, lang);
 
     return {
       positions, chart, navamsaChart, rasiGrid, navamsaGrid,
@@ -246,8 +247,10 @@ function PlaceAutocomplete({ value, onSelect, onChangeText }) {
   );
 }
 
-const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult }) => {
+const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult, lang = 'en' }) => {
   if (!dashaTimeline || dashaTimeline.length === 0) return null;
+  
+  const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key, lang) : key;
 
   const data = [];
   dashaTimeline.forEach((maha) => {
@@ -265,7 +268,7 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult }) => {
           score: Math.round(blendedScore), 
           mahaLord: maha.lord,
           antarLord: antar.lord,
-          label: `${maha.lord}-${antar.lord}`,
+          label: `${t(maha.lord)}-${t(antar.lord)}`,
           dateStr: antar.startDate.dateStr
         });
      });
@@ -281,9 +284,9 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl backdrop-blur-md">
-          <p className="text-amber-400 font-bold font-serif mb-1">{payload[0].payload.label} Dasha</p>
-          <p className="text-slate-300 text-xs mb-1">Starts: <span className="font-mono text-emerald-300">{payload[0].payload.dateStr}</span></p>
-          <p className="text-indigo-300 text-sm font-semibold mt-2 border-t border-slate-700 pt-2">Experience: {payload[0].value}/100</p>
+          <p className="text-amber-400 font-bold font-serif mb-1">{payload[0].payload.label} {lang === 'ml' ? 'ദശ' : 'Dasha'}</p>
+          <p className="text-slate-300 text-xs mb-1">{lang === 'ml' ? 'തുടക്കം' : 'Starts'}: <span className="font-mono text-emerald-300">{payload[0].payload.dateStr}</span></p>
+          <p className="text-indigo-300 text-sm font-semibold mt-2 border-t border-slate-700 pt-2">{lang === 'ml' ? 'അനുഭവം' : 'Experience'}: {payload[0].value}/100</p>
         </div>
       );
     }
@@ -292,7 +295,7 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult }) => {
 
   return (
     <div className="mt-8 bg-slate-900/40 p-6 rounded-xl border border-slate-700/50 shadow-2xl">
-       <h4 className="text-lg font-serif text-amber-400 mb-6 flex items-center gap-2">Experience Rating Trajectory</h4>
+       <h4 className="text-lg font-serif text-amber-400 mb-6 flex items-center gap-2">{lang === 'ml' ? 'ജീവിതാനുഭവങ്ങളുടെ ഗ്രാഫ്' : 'Experience Rating Trajectory'}</h4>
        <div className="w-full h-64">
          <ResponsiveContainer width="100%" height="100%">
            <AreaChart
@@ -352,6 +355,9 @@ function JyothishamApp() {
   const [chartResult, setChartResult] = useState(null);
   const [isCalculating, setIsCalculating] = useState(true);
   const debounceRef = useRef(null);
+  
+  const [lang, setLang] = useState('en');
+  const t = useCallback((key) => window.i18n ? window.i18n.t(key, lang) : key, [lang]);
 
   const [formData, setFormData] = useState({
     name: 'Harikrishnan',
@@ -380,7 +386,7 @@ function JyothishamApp() {
 
   const loadProfile = (profile) => {
     setFormData(profile);
-    if (sweReady) recalculate(profile);
+    if (sweReady) recalculate(profile, lang);
   };
   
   const deleteProfile = (e, index) => {
@@ -401,13 +407,13 @@ function JyothishamApp() {
     });
   }, []);
 
-  const recalculate = useCallback((data) => {
+  const recalculate = useCallback((data, currentLang) => {
     if (!window.AstroEngine.isReady) return;
     
     setIsCalculating(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      const result = computeChart(data);
+      const result = computeChart(data, currentLang);
       setChartResult(result);
       setIsCalculating(false);
     }, 400);
@@ -415,9 +421,9 @@ function JyothishamApp() {
 
   useEffect(() => {
     if (sweReady) {
-      recalculate(formData);
+      recalculate(formData, lang);
     }
-  }, [sweReady, recalculate, formData]);
+  }, [sweReady, recalculate, formData, lang]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -433,7 +439,7 @@ function JyothishamApp() {
     }
 
     setFormData(newData);
-    if (sweReady) recalculate(newData);
+    if (sweReady) recalculate(newData, lang);
   };
 
   const handleGenderSelect = (gender) => {
@@ -454,7 +460,7 @@ function JyothishamApp() {
   const reportData = cr ? [
     {
       id: 'personality',
-      title: 'Personality & Traits',
+      title: t('Basic Details'),
       iconElement: <Star size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
@@ -462,21 +468,21 @@ function JyothishamApp() {
           <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.personality.title}</h3>
           <p>{cr.personality.description}</p>
           <div className="mt-2 text-sm space-y-1">
-            <p><strong className="text-white">Lagna:</strong> {cr.personality.lagnaSign}</p>
-            <p><strong className="text-white">Lagna Lord:</strong> {cr.personality.lagnaLord} ({cr.personality.lagnaLordDignity})</p>
-            <p><strong className="text-white">Lagna Nakshatra:</strong> {cr.personality.lagnaNakshatra.name} (Pada {cr.personality.lagnaNakshatra.pada})</p>
+            <p><strong className="text-white">{t('Lagna (Ascendant)')}:</strong> {t(cr.personality.lagnaSign.split(' ')[0])}</p>
+            <p><strong className="text-white">{t('Lagna Lord')}:</strong> {t(cr.personality.lagnaLord.split(' ')[0])} in {t(cr.personality.lagnaLordData?.rasi?.name || 'House')} ({t(cr.personality.lagnaLordDignity)})</p>
+            <p><strong className="text-white">{t('Lagna Nakshatra')}:</strong> {t(cr.personality.lagnaNakshatra.name)} (Pada {cr.personality.lagnaNakshatra.pada})</p>
           </div>
           <ul className="list-disc pl-5 space-y-2 mt-4 text-sm">
-            <li><strong className="text-white">Strengths:</strong> {cr.personality.strengths}</li>
-            <li><strong className="text-white">Challenges:</strong> {cr.personality.challenges}</li>
-            <li><strong className="text-white">Hidden Potential:</strong> {cr.personality.hiddenPotential}</li>
+            <li><strong className="text-white">{t('Strengths')}:</strong> {t(cr.personality.strengths)}</li>
+            <li><strong className="text-white">{t('Challenges')}:</strong> {t(cr.personality.challenges)}</li>
+            <li><strong className="text-white">{t('Hidden Potential')}:</strong> {t(cr.personality.hiddenPotential)}</li>
           </ul>
         </div>
       )
     },
     {
       id: 'career',
-      title: 'Education & Career',
+      title: t('Career & Profession Insights'),
       iconElement: <Briefcase size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
@@ -491,78 +497,78 @@ function JyothishamApp() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
-              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Career Fields</p>
-              <p className="text-sm text-white font-medium">{cr.career.suitableFields}</p>
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{t('Career Fields')}</p>
+              <p className="text-sm text-white font-medium">{t(cr.career.suitableFields)}</p>
             </div>
             <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
-              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Recognition</p>
-              <p className="text-sm text-white font-medium">{cr.career.recognition}</p>
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{t('Recognition')}</p>
+              <p className="text-sm text-white font-medium">{t(cr.career.recognition)}</p>
             </div>
             <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30 md:col-span-2 flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Financial Return</p>
-                <p className="text-sm text-amber-400 font-medium">{cr.career.financialGain}</p>
+                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{t('Financial Return')}</p>
+                <p className="text-sm text-amber-400 font-medium">{t(cr.career.financialGain)}</p>
               </div>
               <Award size={24} className="text-amber-500/50" />
             </div>
           </div>
           
           <div className="mt-4 text-sm space-y-1">
-            <p><strong className="text-slate-400">10th Lord:</strong> {cr.career.tenthLord} ({cr.career.tenthLordDignity})</p>
-            {cr.career.occupants.length > 0 && <p><strong className="text-slate-400">Occupants:</strong> {cr.career.occupants.join(', ')}</p>}
+            <p><strong className="text-slate-400">{t('10th Lord')}:</strong> {t(cr.career.tenthLord)} ({t(cr.career.tenthLordDignity)})</p>
+            {cr.career.occupants.length > 0 && <p><strong className="text-slate-400">{t('Occupants')}:</strong> {cr.career.occupants.map(o => t(o)).join(', ')}</p>}
           </div>
         </div>
       )
     },
     {
       id: 'life',
-      title: 'Key Life Predictions',
+      title: t('Life Predictions'),
       iconElement: <TrendingUp size={20} />,
       content: (
         <div className="space-y-6 text-slate-300 leading-relaxed font-sans">
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Briefcase size={16} className="text-emerald-400" /> {cr.lifePredictions.finance.title}</h3>
-            <p className="pl-6 text-sm">{cr.lifePredictions.finance.description}</p>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Briefcase size={16} className="text-emerald-400" /> {t(cr.lifePredictions.finance.title)}</h3>
+            <p className="pl-6 text-sm">{t(cr.lifePredictions.finance.description)}</p>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Activity size={16} className="text-blue-400" /> Foreign Travel & Residence</h3>
-            <p className="pl-6 text-sm">{cr.lifePredictions.travel}</p>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Activity size={16} className="text-blue-400" /> {t('Foreign Travel & Residence')}</h3>
+            <p className="pl-6 text-sm">{t(cr.lifePredictions.travel)}</p>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Heart size={16} className="text-rose-400" /> Marriage - {cr.lifePredictions.marriage.timing}</h3>
-            <p className="pl-6 text-sm">{cr.lifePredictions.marriage.type}</p>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Heart size={16} className="text-rose-400" /> {t('Marriage')} - {t(cr.lifePredictions.marriage.timing)}</h3>
+            <p className="pl-6 text-sm">{t(cr.lifePredictions.marriage.type)}</p>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><User size={16} className="text-indigo-400" /> Partner</h3>
-            <p className="pl-6 text-sm">{cr.lifePredictions.marriage.partnerTraits.join(', ')}</p>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><User size={16} className="text-indigo-400" /> {t('Partner')}</h3>
+            <p className="pl-6 text-sm">{cr.lifePredictions.marriage.partnerTraits.map(o => t(o)).join(', ')}</p>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><User size={16} className="text-amber-400" /> Children</h3>
-            <p className="pl-6 text-sm">{cr.lifePredictions.children}</p>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><User size={16} className="text-amber-400" /> {t('Children')}</h3>
+            <p className="pl-6 text-sm">{t(cr.lifePredictions.children)}</p>
           </div>
         </div>
       )
     },
     {
       id: 'health',
-      title: 'Health & Cautions',
+      title: t('Health & Vitality Overview'),
       iconElement: <ShieldAlert size={20} />,
       content: (
         <div className="space-y-6 text-slate-300 leading-relaxed font-sans">
-          <IconGrid items={[...cr.lifePredictions.health.vulnerabilities, ...cr.lifePredictions.health.behavioral]} />
+          <IconGrid items={[...cr.lifePredictions.health.vulnerabilities, ...cr.lifePredictions.health.behavioral].map(i => ({...i, text: t(i.text)}))} />
           <div>
-            <p><strong className="text-white uppercase tracking-widest text-sm">Cautions:</strong> {cr.lifePredictions.health.cautions.join(', ')}</p>
+            <p><strong className="text-white uppercase tracking-widest text-sm">{t('Cautions')}:</strong> {cr.lifePredictions.health.cautions.map(c => t(c)).join(', ')}</p>
           </div>
         </div>
       )
     },
     {
       id: 'yogas',
-      title: `Yogas & Doshas (${cr.yogaDoshaResults.summary.totalYogas} found)`,
+      title: t('Yogas & Doshas'),
       iconElement: <Zap size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
-          <h3 className="text-xl font-serif text-amber-400 mb-2">Yogas Detected</h3>
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Yogas Present')}</h3>
           {cr.yogaDoshaResults.yogas.length === 0 ? <p className="text-slate-400">No significant yogas detected.</p> :
             [...cr.yogaDoshaResults.yogas].sort((a, b) => {
               const confVal = { 'HIGH': 3, 'MODERATE': 2, 'LOW': 1 };
@@ -570,7 +576,7 @@ function JyothishamApp() {
             }).map((y, i) => (
               <div key={i} className="p-4 bg-slate-900/50 rounded-lg border border-slate-700/30 mb-3 shadow-lg shadow-black/20">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-amber-400 font-serif text-lg font-bold">{y.name}</span>
+                  <span className="text-amber-400 font-serif text-lg font-bold">{t(y.name)}</span>
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ml-auto ${y.confidence === 'HIGH' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-500/20 text-slate-400'}`}>{y.confidence}</span>
                 </div>
                 {y.effect && <p className="text-sm font-medium text-white mb-2 bg-indigo-500/10 px-3 py-1.5 rounded border border-indigo-500/20">{y.effect}</p>}
@@ -579,12 +585,12 @@ function JyothishamApp() {
               </div>
             ))
           }
-          <h3 className="text-xl font-serif text-amber-400 mt-6 mb-2">Doshas Checked</h3>
+          <h3 className="text-xl font-serif text-rose-400 mt-6 mb-2">{t('Doshas Detected')}</h3>
           {[...cr.yogaDoshaResults.doshas].sort((a, b) => (b.present === a.present ? 0 : b.present ? 1 : -1)).map((d, i) => (
             <div key={i} className={`p-3 rounded-lg border mb-2 ${d.present && d.strength !== 'Cancelled' && d.strength !== 'Cancelled/Mitigated' && d.strength !== 'Absent' ? 'bg-rose-900/20 border-rose-700/30' : 'bg-slate-900/50 border-slate-700/30'}`}>
               <div className="flex items-center gap-2 mb-1">
                 {d.present && d.strength !== 'Cancelled' && d.strength !== 'Cancelled/Mitigated' && d.strength !== 'Absent' ? <AlertTriangle size={14} className="text-rose-400" /> : <CheckCircle size={14} className="text-green-400" />}
-                <span className="text-white font-medium">{d.name}</span>
+                <span className="text-white font-medium">{t(d.name)}</span>
                 {d.disputed && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 rounded">DISPUTED</span>}
               </div>
               <p className="text-xs text-slate-400 mb-2">{d.formation}</p>
@@ -603,35 +609,35 @@ function JyothishamApp() {
     },
     {
       id: 'remedies',
-      title: 'Remedies (Pariharams)',
-      iconElement: <ShieldAlert size={20} />,
+      title: t('Astrological Remedies & Recommendations'),
+      iconElement: <BookOpen size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
-          <h3 className="text-xl font-serif text-amber-400 mb-2">Karmic Balancers</h3>
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Karmic Balancers')}</h3>
           {cr.remedies.map((r, i) => (
             <div key={i} className="mb-4">
-              <h4 className="text-white font-medium mb-2">{r.for}</h4>
+              <h4 className="text-white font-medium mb-2">{t(r.for)}</h4>
               <ul className="list-disc pl-5 space-y-1 text-sm">
-                {r.practices.map((p, j) => <li key={j}>{p}</li>)}
+                {r.practices.map((p, j) => <li key={j}>{t(p)}</li>)}
               </ul>
             </div>
           ))}
-          <p className="text-xs text-slate-500 mt-4 italic">Note: Remedies are traditional suggestions. No guarantees are made. Jyotiṣa is an interpretive lens, not a substitute for professional advice.</p>
+          <p className="text-xs text-slate-500 mt-4 italic">{t('Note: Remedies are traditional suggestions. No guarantees are made. Jyotiṣa is an interpretive lens, not a substitute for professional advice.')}</p>
         </div>
       )
     },
     {
       id: 'dasha',
-      title: 'Vimshottari Dasha Timeline',
+      title: t('Dasha Timeline'),
       iconElement: <Calendar size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
-          <h3 className="text-xl font-serif text-amber-400 mb-2">Life Periods (120-Year Cycle)</h3>
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Life Periods (120-Year Cycle)')}</h3>
           {currentDasha && (
             <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg mb-4">
-              <p className="text-sm text-indigo-300 font-medium">Currently Running:</p>
-              <p className="text-white">{currentDasha.maha.lord} / {currentDasha.antar.lord} / {currentDasha.pratyantar.lord}</p>
-              <p className="text-xs text-slate-400 mt-1">Maha: {currentDasha.maha.startDate} → {currentDasha.maha.endDate} ({currentDasha.maha.remaining} left)</p>
+              <p className="text-sm text-indigo-300 font-medium">{t('Currently Running')}:</p>
+              <p className="text-white">{t(currentDasha.maha.lord)} / {t(currentDasha.antar.lord)} / {t(currentDasha.pratyantar.lord)}</p>
+              <p className="text-xs text-slate-400 mt-1">{t('Maha')}: {currentDasha.maha.startDate} → {currentDasha.maha.endDate} ({currentDasha.maha.remaining} left)</p>
             </div>
           )}
           <div className="space-y-1">
@@ -639,10 +645,10 @@ function JyothishamApp() {
               const isCurrent = currentDasha && currentDasha.maha.lord === d.lord;
               const score = Interpretation.getPlanetScore(d.lord, cr.chart, cr.ashtakavargaResult);
               let dashaLabel = '';
-              if (score >= 75) dashaLabel = 'Outstanding Period';
-              else if (score >= 60) dashaLabel = 'Favorable Period';
-              else if (score < 40) dashaLabel = 'Challenging Period';
-              else dashaLabel = 'Average Period';
+              if (score >= 75) dashaLabel = t('Outstanding Period');
+              else if (score >= 60) dashaLabel = t('Favorable Period');
+              else if (score < 40) dashaLabel = t('Challenging Period');
+              else dashaLabel = t('Average Period');
 
               return (
                 <div key={i} className={`flex items-center gap-3 p-2 rounded-lg text-sm transition-all duration-300 ${isCurrent ? 'bg-amber-500/10 border border-amber-500/30 shadow-lg shadow-amber-900/10 scale-[1.02]' : 'hover:bg-slate-800/50'}`}>
@@ -651,7 +657,7 @@ function JyothishamApp() {
                     <div className={`h-full rounded-full transition-all duration-1000 ${isCurrent ? 'bg-gradient-to-r from-amber-500 to-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-indigo-600/50'}`} style={{ width: `${(d.totalYears / 20) * 100}%` }}></div>
                   </div>
                   <div className="flex flex-col w-32 items-end">
-                    <span className={`text-xs ${isCurrent ? 'text-amber-400 font-bold text-sm' : 'text-slate-300 font-medium'}`}>{d.lord}</span>
+                    <span className={`text-xs ${isCurrent ? 'text-amber-400 font-bold text-sm' : 'text-slate-300 font-medium'}`}>{t(d.lord)}</span>
                     {dashaLabel && <span className="text-[9px] text-emerald-400 font-semibold tracking-wider whitespace-nowrap">{dashaLabel}</span>}
                   </div>
                   <span className="w-12 text-[10px] text-slate-500 text-right font-mono">{d.durationStr}</span>
@@ -659,33 +665,33 @@ function JyothishamApp() {
               );
             })}
             
-            <LifeGraph dashaTimeline={cr.dashaTimeline} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} />
+            <LifeGraph dashaTimeline={cr.dashaTimeline} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} lang={lang} />
           </div>
         </div>
       )
     },
     {
       id: 'ashtakavarga',
-      title: 'Ashtakavarga Analysis',
+      title: t('Ashtakavarga'),
       iconElement: <BookOpen size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
-          <h3 className="text-xl font-serif text-amber-400 mb-2">House Strength (SAV)</h3>
-          <p className="text-xs text-slate-500 mb-3">Total SAV: {cr.ashtakavargaResult.sav.grandTotal} {cr.ashtakavargaResult.sav.isValid ? '✓ (valid)' : `⚠ (expected 337)`} | Average per house: ~28</p>
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{t('House Strength (SAV)')}</h3>
+          <p className="text-xs text-slate-500 mb-3">{t('Total SAV')}: {cr.ashtakavargaResult.sav.grandTotal} {cr.ashtakavargaResult.sav.isValid ? '✓ (valid)' : `⚠ (expected 337)`} | {t('Average per house')}: ~28</p>
           <div className="grid grid-cols-4 gap-2">
             {cr.ashtakavargaResult.houseStrengths.map(h => (
               <div key={h.house} className={`p-2 rounded-lg text-center border ${h.bindus >= 30 ? 'bg-green-900/20 border-green-700/30' : h.bindus >= 28 ? 'bg-emerald-900/10 border-emerald-700/20' : h.bindus >= 25 ? 'bg-slate-800/50 border-slate-700/30' : 'bg-rose-900/10 border-rose-700/20'}`}>
                 <div className="text-[10px] text-slate-500 uppercase">H{h.house}</div>
                 <div className={`text-lg font-bold ${h.bindus >= 30 ? 'text-green-400' : h.bindus >= 28 ? 'text-emerald-400' : h.bindus >= 25 ? 'text-slate-300' : 'text-rose-400'}`}>{h.bindus}</div>
-                <div className="text-[9px] text-slate-500">{h.rasi}</div>
+                <div className="text-[9px] text-slate-500">{t(h.rasi)}</div>
               </div>
             ))}
           </div>
           <div className="mt-4 text-xs">
-            <p className="text-green-400">Strongest: {cr.ashtakavargaResult.strongest.map(h => `H${h.house} (${h.bindus})`).join(', ')}</p>
-            <p className="text-rose-400 mt-1">Weakest: {cr.ashtakavargaResult.weakest.map(h => `H${h.house} (${h.bindus})`).join(', ')}</p>
+            <p className="text-green-400">{t('Strongest')}: {cr.ashtakavargaResult.strongest.map(h => `H${h.house} (${h.bindus})`).join(', ')}</p>
+            <p className="text-rose-400 mt-1">{t('Weakest')}: {cr.ashtakavargaResult.weakest.map(h => `H${h.house} (${h.bindus})`).join(', ')}</p>
           </div>
-          <p className="text-[10px] text-slate-600 mt-3 italic">Relative astrological strength — interpretive, not statistical. Scoring: BPHS Ashtakavarga tables applied to computed positions.</p>
+          <p className="text-[10px] text-slate-600 mt-3 italic">{t('Relative astrological strength — interpretive, not statistical. Scoring: BPHS Ashtakavarga tables applied to computed positions.')}</p>
         </div>
       )
     }
@@ -709,42 +715,48 @@ function JyothishamApp() {
         {/* ═══ LEFT SIDEBAR ═══ */}
         <div className="w-full lg:w-96 shrink-0 bg-[#0F1524] border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col lg:h-full lg:overflow-y-auto z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
           <div className="p-6 md:p-8 flex-1">
-            <div className="flex items-center gap-3 mb-8">
-              <Sparkles className="text-amber-400" size={28} />
-              <div>
-                <h1 className="text-2xl font-serif font-bold text-white tracking-wide">JyothirVeda</h1>
-                <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">Kerala Jyothisham Engine</p>
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <Sparkles className="text-amber-400" size={28} />
+                <div>
+                  <h1 className="text-2xl font-serif font-bold text-white tracking-wide">JyothirVeda</h1>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Kerala Jyothisham Engine</p>
+                </div>
+              </div>
+              <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
+                <button onClick={() => setLang('en')} className={`px-2 py-1 text-xs font-bold rounded-md transition-all ${lang === 'en' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'text-slate-400 hover:text-white'}`}>EN</button>
+                <button onClick={() => setLang('ml')} className={`px-2 py-1 text-xs font-bold rounded-md transition-all ${lang === 'ml' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'text-slate-400 hover:text-white'}`}>മല</button>
               </div>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><User size={14} /> Native Name</label>
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><User size={14} /> {t('Full Name')}</label>
                 <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-all" />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Gender</label>
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('Gender')}</label>
                 <div className="flex gap-2">
                   {['Male', 'Female'].map(g => (
-                    <button key={g} onClick={() => handleGenderSelect(g)} className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.gender === g ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50 border border-indigo-500' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'}`}>{g}</button>
+                    <button key={g} onClick={() => handleGenderSelect(g)} className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.gender === g ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50 border border-indigo-500' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'}`}>{t(g)}</button>
                   ))}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Calendar size={14} /> Date of Birth</label>
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Calendar size={14} /> {t('Date of Birth')}</label>
                   <input type="date" name="dob" value={formData.dob} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 transition-all" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Clock size={14} /> Time</label>
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Clock size={14} /> {t('Time of Birth')}</label>
                   <input type="time" name="time" value={formData.time} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 transition-all" />
                 </div>
               </div>
 
               <div className="space-y-2 relative">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><MapPin size={14} /> Place of Birth</label>
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><MapPin size={14} /> {t('Birth Place (City/Town)')}</label>
                 <PlaceAutocomplete 
                   value={formData.place}
                   onChangeText={(text) => handleChange({ target: { name: 'place', value: text } })}
@@ -843,7 +855,7 @@ function JyothishamApp() {
               {/* Header */}
               <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-6">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-serif text-white mb-2">Cosmic Blueprint</h2>
+                  <h2 className="text-3xl md:text-4xl font-serif text-white mb-2">{t('Cosmic Blueprint')}</h2>
                   <p className="text-slate-400 flex items-center gap-2">
                     <User size={16} /> {formData.name} <span className="text-slate-600">•</span>
                     <MapPin size={16} /> {formData.place}
@@ -851,7 +863,7 @@ function JyothishamApp() {
                 </div>
                 <div className="text-right">
                   <div className="inline-block px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-                    Live Computation
+                    {t('Live Computation')}
                   </div>
                 </div>
               </header>
@@ -859,7 +871,7 @@ function JyothishamApp() {
               {/* High-Probability Keywords */}
               <section className="mb-10">
                 <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Sparkles size={16} className="text-amber-400" /> Top Cosmic Signatures
+                  <Sparkles size={16} className="text-amber-400" /> {t('Top Cosmic Signatures')}
                 </h3>
                 <div className="flex flex-wrap gap-3">
                   {[
@@ -879,7 +891,7 @@ function JyothishamApp() {
               <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 <div className="xl:col-span-5 space-y-6">
                   <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Moon size={16} className="text-amber-400" /> Core Jyothisha Data
+                    <Moon size={16} className="text-amber-400" /> {t('Core Jyothisha Data')}
                   </h3>
                   <GlassCard className="p-6 divide-y divide-slate-700/50">
                     {[
@@ -913,8 +925,8 @@ function JyothishamApp() {
                       <Sun size={16} className="text-amber-400" /> Divisional Charts
                     </h3>
                     <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
-                      <button onClick={() => setActiveChartTab('rasi')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${activeChartTab === 'rasi' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>Rasi (D1)</button>
-                      <button onClick={() => setActiveChartTab('navamsa')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${activeChartTab === 'navamsa' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>Navamsa (D9)</button>
+                      <button onClick={() => setActiveChartTab('rasi')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${activeChartTab === 'rasi' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>{t('Rasi Chart')}</button>
+                      <button onClick={() => setActiveChartTab('navamsa')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${activeChartTab === 'navamsa' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>{t('Navamsa Chart')}</button>
                     </div>
                   </div>
 
@@ -947,7 +959,7 @@ function JyothishamApp() {
               {/* Comprehensive Analysis Accordions */}
               <section className="pb-12">
                 <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                  <Calendar size={16} className="text-amber-400" /> Comprehensive Analysis
+                  <Calendar size={16} className="text-amber-400" /> {t('Comprehensive Analysis')}
                 </h3>
                 <div className="max-w-4xl">
                   {reportData.map((item) => (
