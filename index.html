@@ -23,7 +23,7 @@
     <script src="js/dasha.js?v=3"></script>
     <script src="js/yoga-dosha.js?v=2"></script>
     <script src="js/ashtakavarga.js?v=2"></script>
-    <script src="js/interpretation.js?v=7"></script>
+    <script src="js/interpretation.js?v=8"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -434,8 +434,8 @@ function JyothishamApp() {
       content: (
         <div className="space-y-6 text-slate-300 leading-relaxed font-sans">
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Briefcase size={16} className="text-emerald-400" /> Great Financial Base</h3>
-            <p className="pl-6 text-sm">Peak Moon Dasha, Land, Tech, Stocks Investments</p>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Briefcase size={16} className="text-emerald-400" /> {cr.lifePredictions.finance.title}</h3>
+            <p className="pl-6 text-sm">{cr.lifePredictions.finance.description}</p>
           </div>
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Activity size={16} className="text-blue-400" /> Foreign Travel & Residence</h3>

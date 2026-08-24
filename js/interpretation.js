@@ -610,6 +610,32 @@ const Interpretation = (() => {
     return 'Favorable; standard prospects';
   }
 
+  function interpretFinance(chart) {
+    const lagna = chart.lagnaRasiIndex;
+    const lord2 = VedicCore.getLordOf(2, lagna);
+    const lord11 = VedicCore.getLordOf(11, lagna);
+    const lord2Data = chart.planets[lord2];
+    const lord11Data = chart.planets[lord11];
+    
+    let title = 'Steady Financial Growth';
+    let description = 'Standard income channels; focus on consistent savings.';
+    
+    let score = 0;
+    if (lord2Data.house === 2 || lord2Data.house === 11 || lord11Data.house === 2 || lord11Data.house === 11) score += 3;
+    if (lord2Data.dignity === 'Exalted' || lord11Data.dignity === 'Exalted' || lord2Data.dignity === 'Own' || lord11Data.dignity === 'Own') score += 2;
+    if (lord2Data.house === 6 || lord2Data.house === 8 || lord2Data.house === 12) score -= 2;
+    
+    if (score >= 3) {
+      title = 'Strong Wealth & Dhana Yoga';
+      description = 'Excellent potential for asset building, investments, and passive income sources.';
+    } else if (score < 0) {
+      title = 'Financial Fluctuations';
+      description = 'Expenses may match income; avoid highly speculative investments.';
+    }
+    
+    return { title, description };
+  }
+
   function interpretTravel(chart) {
     const lagna = chart.lagnaRasiIndex;
     const lord9 = VedicCore.getLordOf(9, lagna);
@@ -678,6 +704,7 @@ const Interpretation = (() => {
 
   function generateLifePredictions(chart, dashaResult) {
     return {
+      finance: interpretFinance(chart),
       marriage: interpretMarriage(chart),
       children: interpretChildren(chart),
       travel: interpretTravel(chart),
