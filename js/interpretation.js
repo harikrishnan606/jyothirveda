@@ -157,7 +157,15 @@ const Interpretation = (() => {
       strengths: 'Discipline, organizational skills, long-term planning, authority',
       challenges: 'Rigidity, workaholism, emotional suppression, pessimism',
       hidden: 'Deep wisdom about time and the ability to age with increasing grace and power',
-      tags: ['Goal-oriented', 'Willpower', 'Practical', 'Rigid Persona', 'Inwardly Gentle', 'Trust Issues', 'Anxiety/Depression Risk']
+      tags: ['Goal-oriented', 'Willpower', 'Practical', 'Rigid Persona', 'Inwardly Gentle', 'Trust Issues', 'Anxiety/Depression Risk'],
+      keywords: [
+        { text: 'Goal-oriented, Practical', icon: 'Target' },
+        { text: 'Willpower', icon: 'HandMetal' },
+        { text: 'Inwardly Gentle', icon: 'Heart' },
+        { text: 'Rigid Persona', icon: 'User' },
+        { text: 'Trust Issues', icon: 'ShieldAlert' },
+        { text: 'Anxiety/Depression Risk', icon: 'Brain' }
+      ]
     },
     10: { // Aquarius
       title: 'The Visionary Humanitarian',
@@ -198,6 +206,13 @@ const Interpretation = (() => {
       challenges: traits.challenges,
       hiddenPotential: traits.hidden,
       tags: traits.tags,
+      keywords: traits.keywords || [
+        { text: traits.tags[0], icon: 'Target' },
+        { text: traits.tags[1], icon: 'Activity' },
+        { text: traits.tags[2], icon: 'Heart' },
+        { text: traits.tags[3], icon: 'User' },
+        { text: traits.tags[4], icon: 'ShieldAlert' }
+      ],
       keyYogas: yogaNames,
       lagnaNakshatra: chart.lagnaNakshatra
     };
@@ -582,10 +597,21 @@ const Interpretation = (() => {
     const house6Rasi = (lagna + 5) % 12;
     
     // Add specific items from infographic
-    const vulnerabilities = ['Knees/Joints', 'Gastric Issues', 'Skin Diseases', 'Mental Stress'];
-    const cautions = ['Avoid Alcohol', 'Unnecessary Expenses', 'Work-life balance', 'Emotional Distance'];
+    const vulnerabilities = [
+      { text: 'Knees/Joints', icon: 'Activity' },
+      { text: 'Gastric Issues', icon: 'Flame' },
+      { text: 'Skin Diseases', icon: 'Sparkles' },
+      { text: 'Mental Stress', icon: 'Brain' }
+    ];
+    
+    const behavioral = [
+      { text: 'Avoid Alcohol', icon: 'Ban' },
+      { text: 'Unnecessary Expenses', icon: 'Coins' }
+    ];
 
-    return { vulnerabilities, cautions };
+    const cautions = ['Work-life balance', 'Emotional Distance'];
+
+    return { vulnerabilities, behavioral, cautions };
   }
 
   function generateLifePredictions(chart, dashaResult) {

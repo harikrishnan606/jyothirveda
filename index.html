@@ -17,13 +17,13 @@
     }
     </script>
     <!-- Load calculation modules -->
-    <script src="js/astro-engine.js?v=2"></script>
+    <script src="js/astro-engine.js?v=6"></script>
     <script src="js/vedic-core.js?v=2"></script>
     <script src="js/panchanga.js?v=2"></script>
     <script src="js/dasha.js?v=2"></script>
     <script src="js/yoga-dosha.js?v=2"></script>
     <script src="js/ashtakavarga.js?v=2"></script>
-    <script src="js/interpretation.js?v=2"></script>
+    <script src="js/interpretation.js?v=3"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -33,11 +33,12 @@ import { createRoot } from 'react-dom/client';
 import {
   Moon, Sun, Star, MapPin, Clock, Calendar, ChevronDown, ChevronUp,
   Activity, Award, Heart, Briefcase, Search, ShieldAlert, Sparkles, User,
-  AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen
+  AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen,
+  Target, HandMetal, Flame, Ban, Coins, Brain
 } from 'lucide-react';
 
 // ─── Icon Map ──────────────────────────────────────────────
-const ICON_MAP = { Briefcase, Activity, Heart, Star, Award, ShieldAlert, Sparkles, AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen };
+const ICON_MAP = { Briefcase, Activity, Heart, Star, Award, ShieldAlert, Sparkles, AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen, Target, HandMetal, Flame, Ban, Coins, Brain, User };
 
 // ─── Master Computation ────────────────────────────────────
 function computeChart(formData) {
@@ -162,10 +163,26 @@ const AccordionItem = ({ item, isOpen, onClick }) => (
 
 // ─── Main App ──────────────────────────────────────────────
 function JyothishamApp() {
+  const IconGrid = ({ items }) => (
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-6">
+      {items.map((item, i) => {
+        const Icon = ICON_MAP[item.icon] || Star;
+        return (
+          <div key={i} className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-amber-400 mb-2 border border-slate-700">
+              <Icon size={24} />
+            </div>
+            <span className="text-xs text-slate-300 font-medium leading-tight">{item.text}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   const [openAccordion, setOpenAccordion] = useState('personality');
   const [activeChartTab, setActiveChartTab] = useState('rasi');
   const [chartResult, setChartResult] = useState(null);
-  const [isCalculating, setIsCalculating] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(true);
   const debounceRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -178,19 +195,34 @@ function JyothishamApp() {
     lng: '76.9583'
   });
 
+  const [sweReady, setSweReady] = useState(false);
+
+  useEffect(() => {
+    // Initialize WebAssembly Swiss Ephemeris
+    window.AstroEngine.init().then(() => {
+      setSweReady(true);
+    }).catch(err => {
+      console.error("Failed to load Swiss Ephemeris WASM:", err);
+    });
+  }, []);
+
   const recalculate = useCallback((data) => {
+    if (!window.AstroEngine.isReady) return;
+    
     setIsCalculating(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const result = computeChart(data);
       setChartResult(result);
       setIsCalculating(false);
-    }, 300);
+    }, 400);
   }, []);
 
   useEffect(() => {
-    recalculate(formData);
-  }, []);
+    if (sweReady) {
+      recalculate(formData);
+    }
+  }, [sweReady, recalculate, formData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -198,7 +230,7 @@ function JyothishamApp() {
 
     // Auto-lookup coordinates
     if (name === 'place') {
-      const city = Interpretation.lookupCity(value);
+      const city = window.Interpretation.lookupCity(value);
       if (city) {
         newData.lat = String(city.lat);
         newData.lng = String(city.lng);
@@ -206,7 +238,7 @@ function JyothishamApp() {
     }
 
     setFormData(newData);
-    recalculate(newData);
+    if (sweReady) recalculate(newData);
   };
 
   const handleGenderSelect = (gender) => {
@@ -231,13 +263,7 @@ function JyothishamApp() {
       iconElement: <Star size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
-          {cr.personality.tags && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {cr.personality.tags.map((tag, i) => (
-                <span key={i} className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs font-semibold uppercase tracking-wider">{tag}</span>
-              ))}
-            </div>
-          )}
+          {cr.personality.keywords && <IconGrid items={cr.personality.keywords} />}
           <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.personality.title}</h3>
           <p>{cr.personality.description}</p>
           <div className="mt-2 text-sm space-y-1">
@@ -296,49 +322,41 @@ function JyothishamApp() {
     {
       id: 'life',
       title: 'Key Life Predictions',
-      iconElement: <Activity size={20} />,
+      iconElement: <TrendingUp size={20} />,
       content: (
         <div className="space-y-6 text-slate-300 leading-relaxed font-sans">
           <div>
-            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2 mb-2"><Heart size={14} /> Marriage & Partner</h3>
-            <div className="pl-6 border-l-2 border-slate-700 space-y-2">
-              <p className="text-sm"><strong className="text-white">Timing:</strong> {cr.lifePredictions.marriage.timing}</p>
-              <p className="text-sm"><strong className="text-white">Type:</strong> {cr.lifePredictions.marriage.type}</p>
-              <p className="text-sm"><strong className="text-white">Partner Traits:</strong> {cr.lifePredictions.marriage.partnerTraits.join(', ')}</p>
-            </div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Briefcase size={16} className="text-emerald-400" /> Great Financial Base</h3>
+            <p className="pl-6 text-sm">Peak Moon Dasha, Land, Tech, Stocks Investments</p>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2 mb-2"><User size={14} /> Family & Children</h3>
-            <div className="pl-6 border-l-2 border-slate-700">
-              <p className="text-sm text-white">{cr.lifePredictions.children}</p>
-            </div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Activity size={16} className="text-blue-400" /> Foreign Travel & Residence</h3>
+            <p className="pl-6 text-sm">{cr.lifePredictions.travel}</p>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2 mb-2"><Activity size={14} /> Foreign Travel & Residence</h3>
-            <div className="pl-6 border-l-2 border-slate-700">
-              <p className="text-sm text-white">{cr.lifePredictions.travel}</p>
-            </div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Heart size={16} className="text-rose-400" /> Marriage - {cr.lifePredictions.marriage.timing}</h3>
+            <p className="pl-6 text-sm">{cr.lifePredictions.marriage.type}</p>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-rose-400 uppercase tracking-widest flex items-center gap-2 mb-2"><ShieldAlert size={14} /> Health Cautions</h3>
-            <div className="pl-6 border-l-2 border-slate-700 space-y-3">
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Vulnerable Areas</p>
-                <div className="flex flex-wrap gap-2">
-                  {cr.lifePredictions.health.vulnerabilities.map((v, i) => (
-                    <span key={i} className="px-2 py-1 bg-rose-900/20 text-rose-300 rounded text-xs">{v}</span>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Behavioral Cautions</p>
-                <div className="flex flex-wrap gap-2">
-                  {cr.lifePredictions.health.cautions.map((c, i) => (
-                    <span key={i} className="px-2 py-1 bg-slate-800 text-slate-300 rounded border border-slate-700 text-xs">{c}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><User size={16} className="text-indigo-400" /> Partner</h3>
+            <p className="pl-6 text-sm">{cr.lifePredictions.marriage.partnerTraits.join(', ')}</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><User size={16} className="text-amber-400" /> Children</h3>
+            <p className="pl-6 text-sm">{cr.lifePredictions.children}</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'health',
+      title: 'Health & Cautions',
+      iconElement: <ShieldAlert size={20} />,
+      content: (
+        <div className="space-y-6 text-slate-300 leading-relaxed font-sans">
+          <IconGrid items={[...cr.lifePredictions.health.vulnerabilities, ...cr.lifePredictions.health.behavioral]} />
+          <div>
+            <p><strong className="text-white uppercase tracking-widest text-sm">Cautions:</strong> {cr.lifePredictions.health.cautions.join(', ')}</p>
           </div>
         </div>
       )
