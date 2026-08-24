@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JyothirVeda - Premium Vedic Astrology</title>
+    <meta name="description" content="JyothirVeda - Traditional Kerala Jyothisham calculator with real-time Vedic astrology computations">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.372.0"
+      }
+    }
+    </script>
+    <!-- Load calculation modules -->
+    <script src="js/astro-engine.js"></script>
+    <script src="js/vedic-core.js"></script>
+    <script src="js/panchanga.js"></script>
+    <script src="js/dasha.js"></script>
+    <script src="js/yoga-dosha.js"></script>
+    <script src="js/ashtakavarga.js"></script>
+    <script src="js/interpretation.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel" data-type="module">
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createRoot } from 'react-dom/client';
+import {
+  Moon, Sun, Star, MapPin, Clock, Calendar, ChevronDown, ChevronUp,
+  Activity, Award, Heart, Briefcase, Search, ShieldAlert, Sparkles, User,
+  AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen
+} from 'lucide-react';
+
+// ─── Icon Map ──────────────────────────────────────────────
+const ICON_MAP = { Briefcase, Activity, Heart, Star, Award, ShieldAlert, Sparkles, AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen };
+
+// ─── Master Computation ────────────────────────────────────
+function computeChart(formData) {
+  try {
+    const [year, month, day] = formData.dob.split('-').map(Number);
+    const [hour, minute] = formData.time.split(':').map(Number);
+    const lat = parseFloat(formData.lat);
+    const lng = parseFloat(formData.lng);
+
+    if (isNaN(year) || isNaN(lat) || isNaN(lng)) return null;
+
+    // 1. Astronomical positions
+    const positions = AstroEngine.computeAllPositions({
+      year, month, day, hour, minute,
+      tzOffset: 5.5, lat, lng
+    });
+
+    // 2. Build D1 chart
+    const chart = VedicCore.buildChart(positions.sidereal);
+    // Attach retrograde info to chart planets
+    for (const [planet, retro] of Object.entries(positions.retrograde)) {
+      if (chart.planets[planet]) chart.planets[planet].retrograde = retro;
+    }
+    // Attach combustion info
+    for (const [planet, comb] of Object.entries(positions.combust)) {
+      if (chart.planets[planet]) chart.planets[planet].combust = comb;
+    }
+    // Attach longitudes
+    for (const [planet, long] of Object.entries(positions.sidereal)) {
+      if (chart.planets[planet]) chart.planets[planet].longitude = long;
+    }
+
+    // 3. Build Navamsa chart
+    const navamsaChart = VedicCore.buildNavamsaChart(positions.sidereal);
+
+    // 4. Build grids for UI
+    const rasiGrid = VedicCore.buildRasiGrid(chart);
+    const navamsaGrid = VedicCore.buildRasiGrid(navamsaChart);
+
+    // 5. Panchanga
+    const panchanga = Panchanga.buildPanchanga(
+      positions.sidereal.Sun, positions.sidereal.Moon, positions.jd
+    );
+
+    // 6. Dasha
+    const dashaTimeline = DashaSystem.getMahaDashaTimeline(positions.jd, positions.sidereal.Moon);
+    const now = new Date();
+    const nowJD = AstroEngine.dateToJulianDay(
+      now.getFullYear(), now.getMonth() + 1, now.getDate(),
+      now.getHours(), now.getMinutes(), 5.5
+    );
+    const currentDasha = DashaSystem.getCurrentDasha(positions.jd, positions.sidereal.Moon, nowJD);
+
+    // 7. Yogas & Doshas
+    const yogaDoshaResults = YogaDosha.detectAll(chart);
+
+    // 8. Ashtakavarga
+    const ashtakavargaResult = Ashtakavarga.compute(chart);
+
+    // 9. Interpretations
+    const personality = Interpretation.interpretPersonality(chart, yogaDoshaResults);
+    const career = Interpretation.interpretCareer(chart);
+    const wealth = Interpretation.interpretWealth(chart, ashtakavargaResult);
+    const remedies = Interpretation.interpretRemedies(chart, yogaDoshaResults);
+    const insights = Interpretation.generateInsights(chart, currentDasha, ashtakavargaResult, yogaDoshaResults);
+    const coreData = Interpretation.generateCoreData(chart, panchanga, currentDasha);
+
+    return {
+      positions, chart, navamsaChart, rasiGrid, navamsaGrid,
+      panchanga, dashaTimeline, currentDasha,
+      yogaDoshaResults, ashtakavargaResult,
+      personality, career, wealth, remedies, insights, coreData
+    };
+  } catch (e) {
+    console.error('Chart computation error:', e);
+    return null;
+  }
+}
+
+// ─── Reusable Components ───────────────────────────────────
+const CircularProgress = ({ percentage }) => {
+  const radius = 24;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const colorClass = percentage > 75 ? 'text-green-400' : percentage > 50 ? 'text-amber-400' : 'text-rose-400';
+  return (
+    <div className="relative flex items-center justify-center h-16 w-16 shrink-0">
+      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-800" />
+        <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className={`${colorClass} transition-all duration-1000 ease-out`} strokeLinecap="round" />
+      </svg>
+      <span className="absolute text-xs font-bold text-white">{percentage}%</span>
+    </div>
+  );
+};
+
+const GlassCard = ({ children, className = '' }) => (
+  <div className={`bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-xl ${className}`}>
+    {children}
+  </div>
+);
+
+const AccordionItem = ({ item, isOpen, onClick }) => (
+  <div className="border border-slate-700/50 rounded-xl mb-3 overflow-hidden bg-slate-800/30 transition-all duration-300">
+    <button className="w-full px-6 py-4 flex items-center justify-between text-left focus:outline-none hover:bg-slate-700/30 transition-colors" onClick={onClick}>
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+          {item.iconElement}
+        </div>
+        <span className="font-serif text-lg font-medium text-slate-100">{item.title}</span>
+      </div>
+      {isOpen ? <ChevronUp className="text-amber-400" size={20} /> : <ChevronDown className="text-slate-500" size={20} />}
+    </button>
+    <div className={`transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+      <div className="p-6 pt-2 border-t border-slate-700/50">
+        {item.content}
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Main App ──────────────────────────────────────────────
+function JyothishamApp() {
+  const [openAccordion, setOpenAccordion] = useState('personality');
+  const [activeChartTab, setActiveChartTab] = useState('rasi');
+  const [chartResult, setChartResult] = useState(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const debounceRef = useRef(null);
+
+  const [formData, setFormData] = useState({
+    name: 'Harikrishnan',
+    gender: 'Male',
+    dob: '1991-01-13',
+    time: '07:55',
+    place: 'Adimali, Idukki, Kerala',
+    lat: '10.0089',
+    lng: '76.9583'
+  });
+
+  const recalculate = useCallback((data) => {
+    setIsCalculating(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const result = computeChart(data);
+      setChartResult(result);
+      setIsCalculating(false);
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    recalculate(formData);
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newData = { ...formData, [name]: value };
+
+    // Auto-lookup coordinates
+    if (name === 'place') {
+      const city = Interpretation.lookupCity(value);
+      if (city) {
+        newData.lat = String(city.lat);
+        newData.lng = String(city.lng);
+      }
+    }
+
+    setFormData(newData);
+    recalculate(newData);
+  };
+
+  const handleGenderSelect = (gender) => {
+    const newData = { ...formData, gender };
+    setFormData(newData);
+  };
+
+  // Derived data
+  const cr = chartResult;
+  const insightsData = cr ? cr.insights.map(i => ({ ...i, icon: ICON_MAP[i.icon] || Activity })) : [];
+
+  const rasiGridMap = cr ? (activeChartTab === 'rasi' ? cr.rasiGrid : cr.navamsaGrid) : [];
+
+  const coreData = cr ? cr.coreData : {};
+  const currentDasha = cr ? cr.currentDasha : null;
+
+  // Build report accordion data
+  const reportData = cr ? [
+    {
+      id: 'personality',
+      title: 'Personality & Traits',
+      iconElement: <Star size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.personality.title}</h3>
+          <p>{cr.personality.description}</p>
+          <div className="mt-2 text-sm space-y-1">
+            <p><strong className="text-white">Lagna:</strong> {cr.personality.lagnaSign}</p>
+            <p><strong className="text-white">Lagna Lord:</strong> {cr.personality.lagnaLord} ({cr.personality.lagnaLordDignity})</p>
+            <p><strong className="text-white">Lagna Nakshatra:</strong> {cr.personality.lagnaNakshatra.name} (Pada {cr.personality.lagnaNakshatra.pada})</p>
+          </div>
+          <ul className="list-disc pl-5 space-y-2 mt-4 text-sm">
+            <li><strong className="text-white">Strengths:</strong> {cr.personality.strengths}</li>
+            <li><strong className="text-white">Challenges:</strong> {cr.personality.challenges}</li>
+            <li><strong className="text-white">Hidden Potential:</strong> {cr.personality.hiddenPotential}</li>
+          </ul>
+          {cr.personality.keyYogas.length > 0 && (
+            <p className="text-xs text-indigo-300 mt-3">Key Yogas supporting personality: {cr.personality.keyYogas.join(', ')}</p>
+          )}
+        </div>
+      )
+    },
+    {
+      id: 'career',
+      title: 'Education & Career',
+      iconElement: <Briefcase size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.career.title}</h3>
+          <p><strong className="text-white">10th Lord:</strong> {cr.career.tenthLord} ({cr.career.tenthLordDignity})</p>
+          <p><strong className="text-white">Career Trajectory:</strong> {cr.career.trajectory}</p>
+          <p><strong className="text-white">Suitable Fields:</strong> {cr.career.suitableFields}</p>
+          {cr.career.occupants.length > 0 && <p><strong className="text-white">10th House Occupants:</strong> {cr.career.occupants.join(', ')}</p>}
+          {cr.career.aspectedBy.length > 0 && <p><strong className="text-white">10th House Aspected By:</strong> {cr.career.aspectedBy.join(', ')}</p>}
+          <p className="text-xs text-slate-500 mt-2">Confidence: {cr.career.confidence}</p>
+        </div>
+      )
+    },
+    {
+      id: 'wealth',
+      title: 'Wealth & Fortune',
+      iconElement: <Award size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.wealth.title}</h3>
+          <p><strong className="text-white">2nd Lord:</strong> {cr.wealth.secondLord}</p>
+          <p><strong className="text-white">11th Lord:</strong> {cr.wealth.eleventhLord}</p>
+          <p><strong className="text-white">Jupiter's Influence:</strong> {cr.wealth.jupiterAspect}</p>
+          <p><strong className="text-white">2nd House SAV:</strong> {cr.wealth.house2SAV}</p>
+          <p><strong className="text-white">11th House SAV:</strong> {cr.wealth.house11SAV}</p>
+          <p className="mt-2 font-medium text-amber-300">{cr.wealth.overall}</p>
+        </div>
+      )
+    },
+    {
+      id: 'yogas',
+      title: `Yogas & Doshas (${cr.yogaDoshaResults.summary.totalYogas} found)`,
+      iconElement: <Zap size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          <h3 className="text-xl font-serif text-amber-400 mb-2">Yogas Detected</h3>
+          {cr.yogaDoshaResults.yogas.length === 0 ? <p className="text-slate-400">No significant yogas detected.</p> :
+            cr.yogaDoshaResults.yogas.map((y, i) => (
+              <div key={i} className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30 mb-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${y.confidence === 'HIGH' ? 'bg-green-500/20 text-green-400' : y.confidence === 'MODERATE' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'}`}>{y.confidence}</span>
+                  <span className="text-white font-medium">{y.name}</span>
+                </div>
+                <p className="text-xs text-slate-400">{y.rule}</p>
+                <p className="text-xs text-slate-300 mt-1">{y.formation}</p>
+              </div>
+            ))
+          }
+          <h3 className="text-xl font-serif text-amber-400 mt-6 mb-2">Doshas Checked</h3>
+          {cr.yogaDoshaResults.doshas.map((d, i) => (
+            <div key={i} className={`p-3 rounded-lg border mb-2 ${d.present && d.strength !== 'Cancelled' && d.strength !== 'Cancelled/Mitigated' && d.strength !== 'Absent' ? 'bg-rose-900/20 border-rose-700/30' : 'bg-slate-900/50 border-slate-700/30'}`}>
+              <div className="flex items-center gap-2 mb-1">
+                {d.present && d.strength !== 'Cancelled' && d.strength !== 'Cancelled/Mitigated' && d.strength !== 'Absent' ? <AlertTriangle size={14} className="text-rose-400" /> : <CheckCircle size={14} className="text-green-400" />}
+                <span className="text-white font-medium">{d.name}</span>
+                {d.disputed && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 rounded">DISPUTED</span>}
+              </div>
+              <p className="text-xs text-slate-400">{d.formation}</p>
+              {d.cancellation && d.cancellation !== 'N/A' && d.cancellation !== 'No cancellation' && (
+                <p className="text-xs text-green-400 mt-1">Cancellation: {d.cancellation}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      id: 'remedies',
+      title: 'Remedies (Pariharams)',
+      iconElement: <ShieldAlert size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          <h3 className="text-xl font-serif text-amber-400 mb-2">Karmic Balancers</h3>
+          {cr.remedies.map((r, i) => (
+            <div key={i} className="mb-4">
+              <h4 className="text-white font-medium mb-2">{r.for}</h4>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                {r.practices.map((p, j) => <li key={j}>{p}</li>)}
+              </ul>
+            </div>
+          ))}
+          <p className="text-xs text-slate-500 mt-4 italic">Note: Remedies are traditional suggestions. No guarantees are made. Jyotiṣa is an interpretive lens, not a substitute for professional advice.</p>
+        </div>
+      )
+    },
+    {
+      id: 'dasha',
+      title: 'Vimshottari Dasha Timeline',
+      iconElement: <Calendar size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          <h3 className="text-xl font-serif text-amber-400 mb-2">Life Periods (120-Year Cycle)</h3>
+          {currentDasha && (
+            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg mb-4">
+              <p className="text-sm text-indigo-300 font-medium">Currently Running:</p>
+              <p className="text-white">{currentDasha.maha.lord} / {currentDasha.antar.lord} / {currentDasha.pratyantar.lord}</p>
+              <p className="text-xs text-slate-400 mt-1">Maha: {currentDasha.maha.startDate} → {currentDasha.maha.endDate} ({currentDasha.maha.remaining} left)</p>
+            </div>
+          )}
+          <div className="space-y-1">
+            {cr.dashaTimeline.map((d, i) => {
+              const isCurrent = currentDasha && currentDasha.maha.lord === d.lord;
+              return (
+                <div key={i} className={`flex items-center gap-3 p-2 rounded-lg text-sm ${isCurrent ? 'bg-amber-500/10 border border-amber-500/20' : 'hover:bg-slate-800/50'}`}>
+                  <span className={`w-20 font-mono text-xs ${isCurrent ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>{d.startDate.dateStr}</span>
+                  <div className={`flex-1 h-2 rounded-full overflow-hidden bg-slate-800 ${isCurrent ? 'ring-1 ring-amber-400/50' : ''}`}>
+                    <div className={`h-full rounded-full ${isCurrent ? 'bg-amber-400' : 'bg-indigo-500/50'}`} style={{ width: `${(d.totalYears / 20) * 100}%` }}></div>
+                  </div>
+                  <span className={`w-16 text-xs text-right ${isCurrent ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>{d.lord}</span>
+                  <span className="w-12 text-xs text-slate-500 text-right">{d.durationStr}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'ashtakavarga',
+      title: 'Ashtakavarga Analysis',
+      iconElement: <BookOpen size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          <h3 className="text-xl font-serif text-amber-400 mb-2">House Strength (SAV)</h3>
+          <p className="text-xs text-slate-500 mb-3">Total SAV: {cr.ashtakavargaResult.sav.grandTotal} {cr.ashtakavargaResult.sav.isValid ? '✓ (valid)' : `⚠ (expected 337)`} | Average per house: ~28</p>
+          <div className="grid grid-cols-4 gap-2">
+            {cr.ashtakavargaResult.houseStrengths.map(h => (
+              <div key={h.house} className={`p-2 rounded-lg text-center border ${h.bindus >= 30 ? 'bg-green-900/20 border-green-700/30' : h.bindus >= 28 ? 'bg-emerald-900/10 border-emerald-700/20' : h.bindus >= 25 ? 'bg-slate-800/50 border-slate-700/30' : 'bg-rose-900/10 border-rose-700/20'}`}>
+                <div className="text-[10px] text-slate-500 uppercase">H{h.house}</div>
+                <div className={`text-lg font-bold ${h.bindus >= 30 ? 'text-green-400' : h.bindus >= 28 ? 'text-emerald-400' : h.bindus >= 25 ? 'text-slate-300' : 'text-rose-400'}`}>{h.bindus}</div>
+                <div className="text-[9px] text-slate-500">{h.rasi}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 text-xs">
+            <p className="text-green-400">Strongest: {cr.ashtakavargaResult.strongest.map(h => `H${h.house} (${h.bindus})`).join(', ')}</p>
+            <p className="text-rose-400 mt-1">Weakest: {cr.ashtakavargaResult.weakest.map(h => `H${h.house} (${h.bindus})`).join(', ')}</p>
+          </div>
+          <p className="text-[10px] text-slate-600 mt-3 italic">Relative astrological strength — interpretive, not statistical. Scoring: BPHS Ashtakavarga tables applied to computed positions.</p>
+        </div>
+      )
+    }
+  ] : [];
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0B1021; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        body { background-color: #0B1021; color: #f8fafc; overflow: hidden; }
+      `}</style>
+
+      <div className="flex flex-col lg:flex-row h-screen w-full bg-[#0B1021] overflow-hidden font-sans selection:bg-amber-500/30">
+
+        {/* ═══ LEFT SIDEBAR ═══ */}
+        <div className="w-full lg:w-96 shrink-0 bg-[#0F1524] border-r border-slate-800 flex flex-col h-full lg:h-auto overflow-y-auto z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+          <div className="p-6 md:p-8 flex-1">
+            <div className="flex items-center gap-3 mb-8">
+              <Sparkles className="text-amber-400" size={28} />
+              <div>
+                <h1 className="text-2xl font-serif font-bold text-white tracking-wide">JyothirVeda</h1>
+                <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">Kerala Jyothisham Engine</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><User size={14} /> Native Name</label>
+                <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-all" />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Gender</label>
+                <div className="flex gap-2">
+                  {['Male', 'Female', 'Other'].map(g => (
+                    <button key={g} onClick={() => handleGenderSelect(g)} className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.gender === g ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50 border border-indigo-500' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'}`}>{g}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Calendar size={14} /> Date of Birth</label>
+                  <input type="date" name="dob" value={formData.dob} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Clock size={14} /> Time</label>
+                  <input type="time" name="time" value={formData.time} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 transition-all" />
+                </div>
+              </div>
+
+              <div className="space-y-2 relative">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><MapPin size={14} /> Place of Birth</label>
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" />
+                  <input type="text" name="place" value={formData.place} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-10 pr-4 py-3 text-slate-200 focus:outline-none focus:border-amber-500/50 transition-all" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider">Latitude</label>
+                  <input type="text" name="lat" value={formData.lat} onChange={handleChange} className="w-full bg-slate-900/80 border border-slate-800 rounded px-3 py-2 text-slate-400 text-xs text-center focus:outline-none focus:border-slate-600" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider">Longitude</label>
+                  <input type="text" name="lng" value={formData.lng} onChange={handleChange} className="w-full bg-slate-900/80 border border-slate-800 rounded px-3 py-2 text-slate-400 text-xs text-center focus:outline-none focus:border-slate-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/20 text-center">
+              <p className="text-xs text-indigo-300 flex items-center justify-center gap-2">
+                <Activity size={14} className="animate-pulse" />
+                Results update automatically as you type.
+              </p>
+            </div>
+
+            {/* Calculation method badge */}
+            {cr && (
+              <div className="mt-4 p-3 rounded-lg bg-slate-900/50 border border-slate-800 text-[10px] text-slate-500 space-y-1">
+                <p>Engine: {cr.positions.method}</p>
+                <p>Ayanamsa: {cr.positions.ayanamsaType} ({cr.positions.ayanamsa.toFixed(4)}°)</p>
+                <p>Houses: Whole-sign (Rāśi = Bhāva)</p>
+                <p>ΔT: ~{cr.positions.deltaT.toFixed(1)}s</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ═══ MAIN CONTENT ═══ */}
+        <div className="flex-1 relative h-full overflow-y-auto scroll-smooth">
+
+          {/* Loading overlay */}
+          <div className={`absolute inset-0 z-10 bg-[#0B1021]/60 backdrop-blur-sm transition-all duration-500 flex items-center justify-center pointer-events-none ${isCalculating ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-slate-900/80 border border-slate-700 shadow-2xl">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-4 border-amber-500/20"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-amber-400 border-t-transparent animate-spin"></div>
+                <Star className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-amber-400 animate-pulse" size={20} />
+              </div>
+              <p className="text-amber-400 text-sm font-medium tracking-widest uppercase animate-pulse">Computing Positions...</p>
+            </div>
+          </div>
+
+          {cr && (
+            <div className="p-6 md:p-10 lg:p-12 max-w-6xl mx-auto space-y-12">
+
+              {/* Header */}
+              <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-6">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-serif text-white mb-2">Cosmic Blueprint</h2>
+                  <p className="text-slate-400 flex items-center gap-2">
+                    <User size={16} /> {formData.name} <span className="text-slate-600">•</span>
+                    <MapPin size={16} /> {formData.place}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="inline-block px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                    Live Computation
+                  </div>
+                </div>
+              </header>
+
+              {/* Insight Cards */}
+              <section>
+                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <Sparkles size={16} className="text-amber-400" /> Computed Predictions
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {insightsData.map((insight) => (
+                    <GlassCard key={insight.id} className="p-5 flex items-start gap-4 hover:-translate-y-1 transition-transform duration-300">
+                      <CircularProgress percentage={insight.probability} />
+                      <div>
+                        <h4 className="text-slate-100 font-medium flex items-center gap-2 mb-1">
+                          <insight.icon size={16} className="text-indigo-400" /> {insight.title}
+                        </h4>
+                        <p className="text-xs text-slate-400 leading-relaxed">{insight.description}</p>
+                      </div>
+                    </GlassCard>
+                  ))}
+                </div>
+              </section>
+
+              {/* Core Data + Chart Grid */}
+              <section className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                <div className="xl:col-span-5 space-y-6">
+                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Moon size={16} className="text-amber-400" /> Core Jyothisha Data
+                  </h3>
+                  <GlassCard className="p-6 divide-y divide-slate-700/50">
+                    {[
+                      ['Janma Rasi (Moon)', coreData.janmaRasi],
+                      ['Janma Nakshatra', coreData.janmaNakshatra],
+                      ['Lagnam (Ascendant)', coreData.lagnam, true],
+                      ['Tithi', coreData.tithi],
+                      ['Vara', coreData.vara],
+                      ['Yoga', coreData.yoga],
+                      ['Karana', coreData.karana],
+                      ['Current Dasha', coreData.currentDasha, false, true]
+                    ].map(([label, value, isHighlight, isDasha], i) => (
+                      <div key={i} className="flex justify-between items-center py-3">
+                        <span className="text-slate-400 text-sm">{label}</span>
+                        <span className={`font-medium ${isHighlight ? 'text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded' : isDasha ? 'text-indigo-300' : 'text-white'}`}>{value}</span>
+                      </div>
+                    ))}
+                  </GlassCard>
+
+                  <div className="flex flex-wrap gap-3 text-xs text-slate-400 bg-slate-900/50 p-4 rounded-xl">
+                    <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400"></span> Lagnam</div>
+                    <div className="flex items-center gap-1"><span className="text-indigo-400 font-bold">Ju(R)</span> Retrograde</div>
+                    <div className="flex items-center gap-1">Su: Sun, Mo: Moon, Ma: Mars...</div>
+                  </div>
+                </div>
+
+                {/* Rasi / Navamsa Chart */}
+                <div className="xl:col-span-7">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <Sun size={16} className="text-amber-400" /> Divisional Charts
+                    </h3>
+                    <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
+                      <button onClick={() => setActiveChartTab('rasi')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${activeChartTab === 'rasi' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>Rasi (D1)</button>
+                      <button onClick={() => setActiveChartTab('navamsa')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${activeChartTab === 'navamsa' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>Navamsa (D9)</button>
+                    </div>
+                  </div>
+
+                  <GlassCard className="p-6 md:p-8 flex items-center justify-center bg-slate-900/80">
+                    <div className="w-full max-w-md aspect-square relative">
+                      <div className="absolute inset-0 m-auto w-[48%] h-[48%] flex flex-col items-center justify-center text-slate-600 border border-slate-800 rounded-xl bg-[#0B1021]">
+                        <Star size={32} className="opacity-20 mb-2" />
+                        <span className="font-serif text-lg tracking-widest uppercase opacity-40">{activeChartTab === 'rasi' ? 'Rasi' : 'Navamsa'}</span>
+                        <span className="text-xs mt-1 opacity-30">South Indian Style</span>
+                      </div>
+
+                      <div className="grid grid-cols-4 grid-rows-4 h-full w-full gap-1 p-1">
+                        {rasiGridMap.map((cell) => (
+                          <div key={cell.id} className={`relative flex flex-col p-2 border transition-all duration-300 ${cell.isLagnam ? 'border-amber-400/80 bg-amber-900/20 shadow-[inset_0_0_15px_rgba(251,191,36,0.15)]' : 'border-slate-700 bg-slate-800/40 hover:bg-slate-700/50'}`} style={{ gridColumnStart: cell.col, gridRowStart: cell.row }}>
+                            <span className="text-[10px] uppercase text-slate-500 font-semibold mb-auto">{cell.label}</span>
+                            {cell.isLagnam && <span className="absolute top-1 right-1 text-[9px] font-bold text-amber-400 bg-amber-400/10 px-1 rounded">Asc</span>}
+                            <div className="text-sm font-bold text-indigo-200 mt-1 flex flex-wrap gap-1">
+                              {cell.planets.split(', ').map((p, i) => (
+                                p && <span key={i} className={`${p.includes('(R)') ? 'text-rose-300' : p === 'Mo' ? 'text-blue-300' : 'text-slate-200'}`}>{p}</span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </GlassCard>
+                </div>
+              </section>
+
+              {/* Comprehensive Analysis Accordions */}
+              <section className="pb-12">
+                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <Calendar size={16} className="text-amber-400" /> Comprehensive Analysis
+                </h3>
+                <div className="max-w-4xl">
+                  {reportData.map((item) => (
+                    <AccordionItem key={item.id} item={item} isOpen={openAccordion === item.id} onClick={() => setOpenAccordion(openAccordion === item.id ? null : item.id)} />
+                  ))}
+                </div>
+              </section>
+
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(<JyothishamApp />);
+    </script>
+</body>
+</html>
