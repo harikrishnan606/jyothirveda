@@ -564,63 +564,116 @@ const Interpretation = (() => {
     const lagna = chart.lagnaRasiIndex;
     const lord7 = VedicCore.getLordOf(7, lagna);
     const lord7Data = chart.planets[lord7];
+    const lord5 = VedicCore.getLordOf(5, lagna);
+    const lord5Data = chart.planets[lord5];
     const venusData = chart.planets.Venus;
 
-    let timing = 'Normal';
-    let type = 'Arranged';
-    let partnerTraits = [];
-
-    // Basic logic for Harikrishnan's chart (Moon in 11th, Venus in 10th)
-    if (lord7Data.house === 11 || lord7Data.house === 10 || venusData.house === 10) {
-      timing = 'Delayed, Mid-2025 to Mid-2027';
-      type = 'Love-cum-arranged';
-      partnerTraits = ['Highly Educated', 'Values', 'Spiritual', 'Leadership'];
+    let timing = 'Normal (Expected timeframe)';
+    if (lord7Data.house === 6 || lord7Data.house === 8 || lord7Data.house === 12 || lord7Data.dignity === 'Debilitated' || chart.planets.Saturn.aspects.includes(7)) {
+      timing = 'Possible delays or obstacles; patience required';
+    } else if (lord7Data.house === 1 || lord7Data.house === 7 || venusData.dignity === 'Exalted') {
+      timing = 'Early or timely marriage indicated';
     }
+
+    let type = 'Arranged/Traditional';
+    // 5th lord (romance) connected to 7th lord (marriage)
+    if (lord5Data.house === 7 || lord7Data.house === 5 || lord5Data.house === lord7Data.house || chart.planets.Rahu.house === 7 || chart.planets.Rahu.house === 5) {
+      type = 'Love or Love-cum-arranged';
+    }
+
+    // Partner traits based on 7th lord planet
+    const traitsMap = {
+      Sun: ['Authoritative', 'Confident', 'Leadership'],
+      Moon: ['Nurturing', 'Emotional', 'Caring'],
+      Mars: ['Active', 'Assertive', 'Independent'],
+      Mercury: ['Intellectual', 'Communicative', 'Youthful'],
+      Jupiter: ['Highly Educated', 'Spiritual', 'Values'],
+      Venus: ['Attractive', 'Artistic', 'Harmonious'],
+      Saturn: ['Mature', 'Disciplined', 'Grounded']
+    };
+    let partnerTraits = traitsMap[lord7] || ['Supportive'];
 
     return { timing, type, partnerTraits };
   }
 
   function interpretChildren(chart) {
-    return 'Children Assured'; // simplified for now
+    const lagna = chart.lagnaRasiIndex;
+    const lord5 = VedicCore.getLordOf(5, lagna);
+    const lord5Data = chart.planets[lord5];
+    const jupiterData = chart.planets.Jupiter;
+
+    if (lord5Data.house === 6 || lord5Data.house === 8 || lord5Data.house === 12 || lord5Data.dignity === 'Debilitated') {
+      return 'Requires careful planning; possible delays';
+    } else if (jupiterData.dignity === 'Exalted' || jupiterData.dignity === 'Own' || lord5Data.dignity === 'Exalted' || lord5Data.dignity === 'Own') {
+      return 'Highly favorable prospects for children';
+    }
+    return 'Favorable; standard prospects';
   }
 
   function interpretTravel(chart) {
     const lagna = chart.lagnaRasiIndex;
     const lord9 = VedicCore.getLordOf(9, lagna);
     const lord12 = VedicCore.getLordOf(12, lagna);
+    const lord9Data = chart.planets[lord9];
+    const lord12Data = chart.planets[lord12];
     
-    // Generic logic mapped to infographic
-    return 'Highly Favorable in next 2-3 years';
+    if (lord9Data.house === 9 || lord9Data.house === 12 || lord12Data.house === 9 || lord12Data.house === 12) {
+      return 'Strong indications for foreign travel or settlement';
+    } else if (lord9Data.dignity === 'Exalted' || lord12Data.dignity === 'Exalted') {
+      return 'Highly favorable for long-distance travel';
+    }
+    return 'Moderate travel prospects based on current planetary periods';
   }
 
   // ─── Detailed Health Cautions ─────────────────────────────
   function interpretHealthDetails(chart) {
-    // Body parts mapped to signs/houses
+    // Body parts mapped to signs (0=Aries...11=Pisces)
     const bodyMap = {
-      0: 'Head/Brain', 1: 'Throat/Face', 2: 'Arms/Lungs', 3: 'Chest/Heart',
-      4: 'Stomach', 5: 'Intestines/Gastric', 6: 'Kidneys/Lower Back', 7: 'Reproductive',
-      8: 'Thighs/Hips', 9: 'Knees/Joints', 10: 'Calves/Ankles', 11: 'Feet/Immunity'
+      0: { text: 'Head/Brain', icon: 'Brain' },
+      1: { text: 'Throat/Face', icon: 'Activity' },
+      2: { text: 'Arms/Lungs', icon: 'Wind' },
+      3: { text: 'Chest/Heart', icon: 'Heart' },
+      4: { text: 'Stomach/Heart', icon: 'Activity' },
+      5: { text: 'Intestines/Gastric', icon: 'Flame' },
+      6: { text: 'Kidneys/Lower Back', icon: 'Activity' },
+      7: { text: 'Reproductive', icon: 'Activity' },
+      8: { text: 'Thighs/Hips', icon: 'Activity' },
+      9: { text: 'Knees/Joints', icon: 'Activity' },
+      10: { text: 'Calves/Nerves', icon: 'Activity' },
+      11: { text: 'Feet/Immunity', icon: 'ShieldAlert' }
     };
 
     const lagna = chart.lagnaRasiIndex;
-    const house6Rasi = (lagna + 5) % 12;
+    const house6Rasi = (lagna + 5) % 12; // 6th house sign
+    const house8Rasi = (lagna + 7) % 12; // 8th house sign
     
-    // Add specific items from infographic
-    const vulnerabilities = [
-      { text: 'Knees/Joints', icon: 'Activity' },
-      { text: 'Gastric Issues', icon: 'Flame' },
-      { text: 'Skin Diseases', icon: 'Sparkles' },
-      { text: 'Mental Stress', icon: 'Brain' }
-    ];
+    const vulnerabilities = [];
+    vulnerabilities.push(bodyMap[house6Rasi]);
     
-    const behavioral = [
-      { text: 'Avoid Alcohol', icon: 'Ban' },
-      { text: 'Unnecessary Expenses', icon: 'Coins' }
-    ];
+    // Add specific planetary vulnerabilities based on 6th lord
+    const lord6 = VedicCore.getLordOf(6, lagna);
+    if (lord6 === 'Mars') vulnerabilities.push({ text: 'Inflammation/Heat', icon: 'Flame' });
+    if (lord6 === 'Mercury') vulnerabilities.push({ text: 'Nervous System', icon: 'Brain' });
+    if (lord6 === 'Venus') vulnerabilities.push({ text: 'Sugar/Skin', icon: 'Sparkles' });
+    if (lord6 === 'Saturn') vulnerabilities.push({ text: 'Chronic/Bones', icon: 'Activity' });
+    if (lord6 === 'Moon') vulnerabilities.push({ text: 'Mental Stress', icon: 'Brain' });
+    
+    // Behavioral cautions based on Moon (mind) and Lagna (body)
+    const behavioral = [];
+    if (chart.planets.Moon.dignity === 'Debilitated' || chart.planets.Saturn.aspects.includes(chart.planets.Moon.house)) {
+      behavioral.push({ text: 'Avoid Overthinking', icon: 'Brain' });
+    }
+    if (chart.planets.Mars.dignity === 'Debilitated' || chart.planets.Mars.house === 6) {
+      behavioral.push({ text: 'Avoid Conflict', icon: 'Ban' });
+    }
+    if (behavioral.length === 0) {
+      behavioral.push({ text: 'Maintain Routine', icon: 'Calendar' });
+      behavioral.push({ text: 'Mindful Eating', icon: 'Activity' });
+    }
 
-    const cautions = ['Work-life balance', 'Emotional Distance'];
+    const cautions = ['Work-life balance', 'Manage stress levels proactively'];
 
-    return { vulnerabilities, behavioral, cautions };
+    return { vulnerabilities: vulnerabilities.slice(0,4), behavioral: behavioral.slice(0,2), cautions };
   }
 
   function generateLifePredictions(chart, dashaResult) {
