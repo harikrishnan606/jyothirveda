@@ -450,10 +450,7 @@ const Interpretation = (() => {
 
     insights.push({
       id: 1,
-      title: 'Career & Growth',
-      description: careerScore > 65
-        ? `Favorable period for career advancement. ${lord10} in ${lord10Data.dignity} sign strengthens professional prospects.`
-        : `Period of steady effort required. Focus on skill-building and patience in career matters.`,
+      keyword: careerScore > 65 ? 'High Career Growth' : 'Steady Career Effort',
       probability: careerScore,
       icon: 'Briefcase'
     });
@@ -467,10 +464,7 @@ const Interpretation = (() => {
 
     insights.push({
       id: 2,
-      title: 'Financial Flow',
-      description: financeScore > 65
-        ? `Positive wealth accumulation potential. ${lord2} supports financial growth in the current period.`
-        : `Financial discipline recommended. Avoid speculative investments; focus on stable savings.`,
+      keyword: financeScore > 65 ? 'Wealth Accumulation' : 'Financial Discipline',
       probability: financeScore,
       icon: 'Activity'
     });
@@ -486,13 +480,13 @@ const Interpretation = (() => {
 
     insights.push({
       id: 3,
-      title: 'Health & Vitality',
-      description: healthScore > 65
-        ? `Strong vitality indicated. Lagna lord ${lagnaLord} in ${lagnaLordData.dignity} sign supports overall wellbeing.`
-        : `Pay attention to health routines. Focus on diet, exercise, and stress management.`,
+      keyword: healthScore > 65 ? 'Strong Vitality' : 'Health Routines Required',
       probability: healthScore,
       icon: 'Heart'
     });
+
+    // Sort by probability descending
+    insights.sort((a, b) => b.probability - a.probability);
 
     return insights;
   }

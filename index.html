@@ -23,7 +23,7 @@
     <script src="js/dasha.js?v=2"></script>
     <script src="js/yoga-dosha.js?v=2"></script>
     <script src="js/ashtakavarga.js?v=2"></script>
-    <script src="js/interpretation.js?v=3"></script>
+    <script src="js/interpretation.js?v=4"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -617,14 +617,11 @@ function JyothishamApp() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {insightsData.map((insight) => (
-                    <GlassCard key={insight.id} className="p-5 flex items-start gap-4 hover:-translate-y-1 transition-transform duration-300">
+                    <GlassCard key={insight.id} className="p-4 flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300">
                       <CircularProgress percentage={insight.probability} />
-                      <div>
-                        <h4 className="text-slate-100 font-medium flex items-center gap-2 mb-1">
-                          <insight.icon size={16} className="text-indigo-400" /> {insight.title}
-                        </h4>
-                        <p className="text-xs text-slate-400 leading-relaxed">{insight.description}</p>
-                      </div>
+                      <h4 className="text-slate-100 font-medium text-sm flex items-center gap-2">
+                        <insight.icon size={16} className="text-amber-400" /> {insight.keyword}
+                      </h4>
                     </GlassCard>
                   ))}
                 </div>
