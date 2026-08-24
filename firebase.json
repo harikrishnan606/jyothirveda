@@ -1,16 +1,13 @@
 {
   "hosting": {
+    "target": "jyothirveda",
     "public": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "prompt.md"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
+      "prompt.md",
+      "**/.git/**",
+      "**/.github/**"
     ],
     "headers": [
       {

@@ -1,5 +1,14 @@
 {
   "projects": {
-    "default": "jyothirveda"
+    "default": "websites-f1ca0"
+  },
+  "targets": {
+    "websites-f1ca0": {
+      "hosting": {
+        "jyothirveda": [
+          "jyothirveda"
+        ]
+      }
+    }
   }
 }

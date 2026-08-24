@@ -3,7 +3,7 @@ name: Deploy to Firebase Hosting on Push
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build_and_deploy:
@@ -15,6 +15,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JYOTHIRVEDA }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WEBSITES_F1CA0 }}'
+          target: jyothirveda
           channelId: live
-          projectId: jyothirveda
+          projectId: websites-f1ca0
