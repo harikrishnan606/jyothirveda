@@ -98,7 +98,7 @@ function computeChart(formData, lang = 'en') {
     const currentDasha = DashaSystem.getCurrentDasha(positions.jd, positions.sidereal.Moon, nowJD);
 
     // 7. Yogas & Doshas
-    const yogaDoshaResults = YogaDosha.detectAll(chart);
+    const yogaDoshaResults = YogaDosha.detectAll(chart, lang);
 
     // 8. Ashtakavarga
     const ashtakavargaResult = Ashtakavarga.compute(chart);
@@ -167,7 +167,7 @@ const AccordionItem = ({ item, isOpen, onClick }) => (
 );
 
 // ─── Place Autocomplete Component ───────────────────────────
-function PlaceAutocomplete({ value, onSelect, onChangeText }) {
+function PlaceAutocomplete({ value, onSelect, onChangeText, t }) {
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -228,7 +228,7 @@ function PlaceAutocomplete({ value, onSelect, onChangeText }) {
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
         onFocus={() => { if (suggestions.length > 0) setIsOpen(true) }}
         className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-10 pr-4 py-3 text-slate-200 focus:outline-none focus:border-amber-500/50 transition-all" 
-        placeholder="Type a city name..."
+        placeholder={t("Type a city name...")}
       />
       {isOpen && suggestions.length > 0 && (
         <ul className="absolute z-50 w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
@@ -278,7 +278,7 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult, lang = 'en' }) =>
   const lastMaha = dashaTimeline[dashaTimeline.length - 1];
   const endYear = lastMaha.endDate.year + (lastMaha.endDate.month / 12);
   const lastScore = data[data.length - 1].score;
-  data.push({ year: Number(endYear.toFixed(2)), score: lastScore, mahaLord: '', antarLord: '', label: 'End', dateStr: lastMaha.endDate.dateStr });
+  data.push({ year: Number(endYear.toFixed(2)), score: lastScore, mahaLord: '', antarLord: '', label: t('End'), dateStr: lastMaha.endDate.dateStr });
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -312,9 +312,9 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult, lang = 'en' }) =>
              <XAxis dataKey="year" stroke="#94a3b8" tickFormatter={(val) => Math.floor(val)} tick={{fill: '#94a3b8', fontSize: 12}} tickMargin={10} minTickGap={30} />
              <YAxis domain={[0, 100]} stroke="#94a3b8" tick={{fill: '#94a3b8', fontSize: 12}} />
              <Tooltip content={<CustomTooltip />} />
-             <ReferenceLine y={75} stroke="#10b981" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: 'Excellent', fill: '#10b981', fontSize: 10 }} />
-             <ReferenceLine y={50} stroke="#94a3b8" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: 'Average', fill: '#94a3b8', fontSize: 10 }} />
-             <ReferenceLine y={25} stroke="#f43f5e" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: 'Challenging', fill: '#f43f5e', fontSize: 10 }} />
+             <ReferenceLine y={75} stroke="#10b981" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: t('Excellent'), fill: '#10b981', fontSize: 10 }} />
+             <ReferenceLine y={50} stroke="#94a3b8" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: t('Average'), fill: '#94a3b8', fontSize: 10 }} />
+             <ReferenceLine y={25} stroke="#f43f5e" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: t('Challenging'), fill: '#f43f5e', fontSize: 10 }} />
              <Area 
                 type="monotone" 
                 dataKey="score" 
@@ -327,7 +327,7 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult, lang = 'en' }) =>
            </AreaChart>
          </ResponsiveContainer>
        </div>
-       <p className="text-[11px] text-slate-500 mt-4 italic text-center">X-Axis: Years (Vimshottari Dasha) &nbsp;|&nbsp; Y-Axis: Predicted Experience (0-100) based on planetary dignity & Ashtakavarga.</p>
+       <p className="text-[11px] text-slate-500 mt-4 italic text-center">{lang === 'ml' ? 'X-ആക്സിസ്: വർഷങ്ങൾ (വിംശോത്തരി ദശ) | Y-ആക്സിസ്: ഗ്രഹങ്ങളുടെ ബലവും അഷ്ടകവർഗ്ഗവും അടിസ്ഥാനമാക്കിയുള്ള അനുഭവ നിലവാരം (0-100).' : 'X-Axis: Years (Vimshottari Dasha) | Y-Axis: Predicted Experience (0-100) based on planetary dignity & Ashtakavarga.'}</p>
     </div>
   );
 };
@@ -465,12 +465,12 @@ function JyothishamApp() {
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
           {cr.personality.keywords && <IconGrid items={cr.personality.keywords} />}
-          <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.personality.title}</h3>
-          <p>{cr.personality.description}</p>
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{t(cr.personality.title)}</h3>
+          <p>{t(cr.personality.description)}</p>
           <div className="mt-2 text-sm space-y-1">
             <p><strong className="text-white">{t('Lagna (Ascendant)')}:</strong> {t(cr.personality.lagnaSign.split(' ')[0])}</p>
-            <p><strong className="text-white">{t('Lagna Lord')}:</strong> {t(cr.personality.lagnaLord.split(' ')[0])} in {t(cr.personality.lagnaLordData?.rasi?.name || 'House')} ({t(cr.personality.lagnaLordDignity)})</p>
-            <p><strong className="text-white">{t('Lagna Nakshatra')}:</strong> {t(cr.personality.lagnaNakshatra.name)} (Pada {cr.personality.lagnaNakshatra.pada})</p>
+            <p><strong className="text-white">{t('Lagna Lord')}:</strong> {t(cr.personality.lagnaLord.split(' ')[0])} {lang === 'ml' ? 'സ്ഥിതി ചെയ്യുന്നത്' : 'in'} {t(cr.personality.lagnaLordData?.rasi?.name || 'House')} ({t(cr.personality.lagnaLordDignity)})</p>
+            <p><strong className="text-white">{t('Lagna Nakshatra')}:</strong> {t(cr.personality.lagnaNakshatra.name)} ({lang === 'ml' ? cr.personality.lagnaNakshatra.pada + '-ാം പാദം' : 'Pada ' + cr.personality.lagnaNakshatra.pada})</p>
           </div>
           <ul className="list-disc pl-5 space-y-2 mt-4 text-sm">
             <li><strong className="text-white">{t('Strengths')}:</strong> {t(cr.personality.strengths)}</li>
@@ -489,11 +489,11 @@ function JyothishamApp() {
           {cr.career.educationTags && (
             <div className="flex flex-wrap gap-2 mb-2">
               {cr.career.educationTags.map((tag, i) => (
-                <span key={i} className="px-3 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full text-xs font-semibold tracking-wider flex items-center gap-1"><BookOpen size={12} /> {tag}</span>
+                <span key={i} className="px-3 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full text-xs font-semibold tracking-wider flex items-center gap-1"><BookOpen size={12} /> {t(tag)}</span>
               ))}
             </div>
           )}
-          <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.career.title}</h3>
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{t(cr.career.title)}</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
@@ -568,8 +568,8 @@ function JyothishamApp() {
       iconElement: <Zap size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
-          <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Yogas Present')}</h3>
-          {cr.yogaDoshaResults.yogas.length === 0 ? <p className="text-slate-400">No significant yogas detected.</p> :
+              <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Yogas Present')}</h3>
+          {cr.yogaDoshaResults.yogas.length === 0 ? <p className="text-slate-400">{t('No significant yogas detected.')}</p> :
             [...cr.yogaDoshaResults.yogas].sort((a, b) => {
               const confVal = { 'HIGH': 3, 'MODERATE': 2, 'LOW': 1 };
               return (confVal[b.confidence] || 0) - (confVal[a.confidence] || 0);
@@ -577,11 +577,11 @@ function JyothishamApp() {
               <div key={i} className="p-4 bg-slate-900/50 rounded-lg border border-slate-700/30 mb-3 shadow-lg shadow-black/20">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-amber-400 font-serif text-lg font-bold">{t(y.name)}</span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ml-auto ${y.confidence === 'HIGH' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-500/20 text-slate-400'}`}>{y.confidence}</span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ml-auto ${y.confidence === 'HIGH' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-500/20 text-slate-400'}`}>{t(y.confidence)}</span>
                 </div>
-                {y.effect && <p className="text-sm font-medium text-white mb-2 bg-indigo-500/10 px-3 py-1.5 rounded border border-indigo-500/20">{y.effect}</p>}
-                <p className="text-xs text-slate-400">{y.rule}</p>
-                <p className="text-[11px] text-slate-500 mt-1">{y.formation}</p>
+                {y.effect && <p className="text-sm font-medium text-white mb-2 bg-indigo-500/10 px-3 py-1.5 rounded border border-indigo-500/20">{t(y.effect)}</p>}
+                <p className="text-xs text-slate-400">{t(y.rule)}</p>
+                <p className="text-[11px] text-slate-500 mt-1">{t(y.formation)}</p>
               </div>
             ))
           }
@@ -591,14 +591,14 @@ function JyothishamApp() {
               <div className="flex items-center gap-2 mb-1">
                 {d.present && d.strength !== 'Cancelled' && d.strength !== 'Cancelled/Mitigated' && d.strength !== 'Absent' ? <AlertTriangle size={14} className="text-rose-400" /> : <CheckCircle size={14} className="text-green-400" />}
                 <span className="text-white font-medium">{t(d.name)}</span>
-                {d.disputed && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 rounded">DISPUTED</span>}
+                {d.disputed && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 rounded">{t('DISPUTED')}</span>}
               </div>
-              <p className="text-xs text-slate-400 mb-2">{d.formation}</p>
+              <p className="text-xs text-slate-400 mb-2">{t(d.formation)}</p>
               <div className="mt-2 pt-2 border-t border-slate-700/50">
-                <p className={`text-sm ${d.present && d.strength !== 'Absent' ? 'text-amber-300' : 'text-emerald-400'}`}>{d.residual}</p>
+                <p className={`text-sm ${d.present && d.strength !== 'Absent' ? 'text-amber-300' : 'text-emerald-400'}`}>{t(d.residual)}</p>
                 {d.cancellation && d.cancellation !== 'N/A' && d.cancellation !== 'No cancellation' && (
                   <p className="text-xs text-emerald-400 mt-1 font-medium flex items-center gap-1">
-                    <CheckCircle size={12} /> Mitigation: {d.cancellation}
+                    <CheckCircle size={12} /> {t('Mitigation')}: {t(d.cancellation)}
                   </p>
                 )}
               </div>
@@ -637,7 +637,7 @@ function JyothishamApp() {
             <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg mb-4">
               <p className="text-sm text-indigo-300 font-medium">{t('Currently Running')}:</p>
               <p className="text-white">{t(currentDasha.maha.lord)} / {t(currentDasha.antar.lord)} / {t(currentDasha.pratyantar.lord)}</p>
-              <p className="text-xs text-slate-400 mt-1">{t('Maha')}: {currentDasha.maha.startDate} → {currentDasha.maha.endDate} ({currentDasha.maha.remaining} left)</p>
+              <p className="text-xs text-slate-400 mt-1">{t('Maha')}: {currentDasha.maha.startDate} → {currentDasha.maha.endDate} ({lang === 'ml' ? currentDasha.maha.remaining.replace('y', ' വർഷം').replace('m', ' മാസം') + ' ബാക്കി' : currentDasha.maha.remaining + ' left'})</p>
             </div>
           )}
           <div className="space-y-1">
@@ -677,7 +677,7 @@ function JyothishamApp() {
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
           <h3 className="text-xl font-serif text-amber-400 mb-2">{t('House Strength (SAV)')}</h3>
-          <p className="text-xs text-slate-500 mb-3">{t('Total SAV')}: {cr.ashtakavargaResult.sav.grandTotal} {cr.ashtakavargaResult.sav.isValid ? '✓ (valid)' : `⚠ (expected 337)`} | {t('Average per house')}: ~28</p>
+          <p className="text-xs text-slate-500 mb-3">{t('Total SAV')}: {cr.ashtakavargaResult.sav.grandTotal} {cr.ashtakavargaResult.sav.isValid ? '✓ (' + t('valid') + ')' : `⚠ (${t('expected 337')})`} | {t('Average per house')}: ~28</p>
           <div className="grid grid-cols-4 gap-2">
             {cr.ashtakavargaResult.houseStrengths.map(h => (
               <div key={h.house} className={`p-2 rounded-lg text-center border ${h.bindus >= 30 ? 'bg-green-900/20 border-green-700/30' : h.bindus >= 28 ? 'bg-emerald-900/10 border-emerald-700/20' : h.bindus >= 25 ? 'bg-slate-800/50 border-slate-700/30' : 'bg-rose-900/10 border-rose-700/20'}`}>
@@ -759,6 +759,7 @@ function JyothishamApp() {
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><MapPin size={14} /> {t('Birth Place (City/Town)')}</label>
                 <PlaceAutocomplete 
                   value={formData.place}
+                  t={t}
                   onChangeText={(text) => handleChange({ target: { name: 'place', value: text } })}
                   onSelect={(placeName, lat, lng) => {
                     const newData = { ...formData, place: placeName, lat: String(lat), lng: String(lng) };
@@ -785,12 +786,12 @@ function JyothishamApp() {
                 onClick={saveProfile}
                 className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold rounded-xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
               >
-                <CheckCircle size={18} /> Save Profile
+                <CheckCircle size={18} /> {t('Save Profile')}
               </button>
               
               {history.length > 0 && (
                 <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-700">
-                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2"><Clock size={14} /> Saved Profiles</h4>
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2"><Clock size={14} /> {t('Saved Profiles')}</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                     {history.map((h, i) => (
                       <div 
@@ -818,16 +819,16 @@ function JyothishamApp() {
             <div className="mt-4 p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/20 text-center">
               <p className="text-xs text-indigo-300 flex items-center justify-center gap-2">
                 <Activity size={14} className="animate-pulse" />
-                Results update automatically as you type.
+                {t('Results update automatically as you type.')}
               </p>
             </div>
 
             {/* Calculation method badge */}
             {cr && (
               <div className="mt-4 p-3 rounded-lg bg-slate-900/50 border border-slate-800 text-[10px] text-slate-500 space-y-1">
-                <p>Engine: {cr.positions.method}</p>
-                <p>Ayanamsa: {cr.positions.ayanamsaType} ({cr.positions.ayanamsa.toFixed(4)}°)</p>
-                <p>Houses: Whole-sign (Rāśi = Bhāva)</p>
+                <p>{t('Engine')}: {cr.positions.method}</p>
+                <p>{t('Ayanamsa')}: {cr.positions.ayanamsaType} ({cr.positions.ayanamsa.toFixed(4)}°)</p>
+                <p>{t('Houses')}: {t('Whole-sign (Rāśi = Bhāva)')}</p>
                 <p>ΔT: ~{cr.positions.deltaT.toFixed(1)}s</p>
               </div>
             )}
@@ -845,7 +846,7 @@ function JyothishamApp() {
                 <div className="absolute inset-0 rounded-full border-4 border-amber-400 border-t-transparent animate-spin"></div>
                 <Star className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-amber-400 animate-pulse" size={20} />
               </div>
-              <p className="text-amber-400 text-sm font-medium tracking-widest uppercase animate-pulse">Computing Positions...</p>
+              <p className="text-amber-400 text-sm font-medium tracking-widest uppercase animate-pulse">{t('Computing Positions...')}</p>
             </div>
           </div>
 
@@ -895,14 +896,14 @@ function JyothishamApp() {
                   </h3>
                   <GlassCard className="p-6 divide-y divide-slate-700/50">
                     {[
-                      ['Janma Rasi (Moon)', coreData.janmaRasi],
-                      ['Janma Nakshatra', coreData.janmaNakshatra],
-                      ['Lagnam (Ascendant)', coreData.lagnam, true],
-                      ['Tithi', coreData.tithi],
-                      ['Vara', coreData.vara],
-                      ['Yoga', coreData.yoga],
-                      ['Karana', coreData.karana],
-                      ['Current Dasha', coreData.currentDasha, false, true]
+                      [t('Janma Rasi (Moon)'), coreData.janmaRasi],
+                      [t('Janma Nakshatra'), coreData.janmaNakshatra],
+                      [t('Lagnam (Ascendant)'), coreData.lagnam, true],
+                      [t('Tithi'), coreData.tithi],
+                      [t('Vara'), coreData.vara],
+                      [t('Yoga'), coreData.yoga],
+                      [t('Karana'), coreData.karana],
+                      [t('Current Dasha'), coreData.currentDasha, false, true]
                     ].map(([label, value, isHighlight, isDasha], i) => (
                       <div key={i} className="flex justify-between items-center py-3">
                         <span className="text-slate-400 text-sm">{label}</span>
@@ -912,9 +913,9 @@ function JyothishamApp() {
                   </GlassCard>
 
                   <div className="flex flex-wrap gap-3 text-xs text-slate-400 bg-slate-900/50 p-4 rounded-xl">
-                    <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400"></span> Lagnam</div>
-                    <div className="flex items-center gap-1"><span className="text-indigo-400 font-bold">Ju(R)</span> Retrograde</div>
-                    <div className="flex items-center gap-1">Su: Sun, Mo: Moon, Ma: Mars...</div>
+                    <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400"></span> {t('Lagnam')}</div>
+                    <div className="flex items-center gap-1"><span className="text-indigo-400 font-bold">{t('Ju')}(R)</span> {t('Retrograde')}</div>
+                    <div className="flex items-center gap-1">{lang === 'ml' ? 'സൂ: സൂര്യൻ, ച: ചന്ദ്രൻ, ചൊ: ചൊവ്വ...' : 'Su: Sun, Mo: Moon, Ma: Mars...'}</div>
                   </div>
                 </div>
 
@@ -922,7 +923,7 @@ function JyothishamApp() {
                 <div className="xl:col-span-7">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                      <Sun size={16} className="text-amber-400" /> Divisional Charts
+                      <Sun size={16} className="text-amber-400" /> {t('Divisional Charts')}
                     </h3>
                     <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
                       <button onClick={() => setActiveChartTab('rasi')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${activeChartTab === 'rasi' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>{t('Rasi Chart')}</button>
@@ -934,19 +935,25 @@ function JyothishamApp() {
                     <div className="w-full max-w-md aspect-square relative">
                       <div className="absolute inset-0 m-auto w-[48%] h-[48%] flex flex-col items-center justify-center text-slate-600 border border-slate-800 rounded-xl bg-[#0B1021]">
                         <Star size={32} className="opacity-20 mb-2" />
-                        <span className="font-serif text-lg tracking-widest uppercase opacity-40">{activeChartTab === 'rasi' ? 'Rasi' : 'Navamsa'}</span>
-                        <span className="text-xs mt-1 opacity-30">South Indian Style</span>
+                        <span className="font-serif text-lg tracking-widest uppercase opacity-40">{activeChartTab === 'rasi' ? t('Rasi') : t('Navamsa')}</span>
+                        <span className="text-xs mt-1 opacity-30">{t('South Indian Style')}</span>
                       </div>
 
                       <div className="grid grid-cols-4 grid-rows-4 h-full w-full gap-1 p-1">
                         {rasiGridMap.map((cell) => (
                           <div key={cell.id} className={`relative flex flex-col p-2 border transition-all duration-300 ${cell.isLagnam ? 'border-amber-400/80 bg-amber-900/20 shadow-[inset_0_0_15px_rgba(251,191,36,0.15)]' : 'border-slate-700 bg-slate-800/40 hover:bg-slate-700/50'}`} style={{ gridColumnStart: cell.col, gridRowStart: cell.row }}>
-                            <span className="text-[10px] uppercase text-slate-500 font-semibold mb-auto">{cell.label}</span>
-                            {cell.isLagnam && <span className="absolute top-1 right-1 text-[9px] font-bold text-amber-400 bg-amber-400/10 px-1 rounded">Asc</span>}
+                            <span className="text-[10px] uppercase text-slate-500 font-semibold mb-auto">{t(cell.label)}</span>
+                            {cell.isLagnam && <span className="absolute top-1 right-1 text-[9px] font-bold text-amber-400 bg-amber-400/10 px-1 rounded">{t('Asc')}</span>}
                             <div className="text-sm font-bold text-indigo-200 mt-1 flex flex-wrap gap-1">
-                              {cell.planets.split(', ').map((p, i) => (
-                                p && <span key={i} className={`${p.includes('(R)') ? 'text-rose-300' : p === 'Mo' ? 'text-blue-300' : 'text-slate-200'}`}>{p}</span>
-                              ))}
+                              {cell.planets.split(', ').map((p, i) => {
+                                if (!p) return null;
+                                const isR = p.includes('(R)');
+                                const pCode = isR ? p.replace('(R)', '').trim() : p.trim();
+                                const pText = `${t(pCode)}${isR ? (lang === 'ml' ? ' (വക്ര)' : ' (R)') : ''}`;
+                                return (
+                                  <span key={i} className={`${isR ? 'text-rose-300' : pCode === 'Mo' ? 'text-blue-300' : 'text-slate-200'}`}>{pText}</span>
+                                );
+                              })}
                             </div>
                           </div>
                         ))}
@@ -971,9 +978,15 @@ function JyothishamApp() {
               {/* Global Citation Footer */}
               <section className="pb-12 border-t border-slate-800/50 pt-8 mt-4 text-center max-w-4xl">
                 <p className="text-xs text-slate-500 italic leading-relaxed">
-                  Astrological calculations, yogas, doshas, and interpretations in this report are strictly based on the classical principles outlined in <strong className="text-slate-400">Brihat Parashara Hora Shastra (BPHS)</strong> and <strong className="text-slate-400">Phaladeepika</strong>. Planetary positions are computed using high-precision Swiss Ephemeris data with Lahiri (Chitra Paksha) Ayanamsa.
+                  {lang === 'ml' ? (
+                    <>ഈ റിപ്പോർട്ടിലെ ജ്യോതിഷ ഗണിതങ്ങളും യോഗങ്ങളും ദോഷങ്ങളും വ്യാഖ്യാനങ്ങളും <strong className="text-slate-400">ബൃഹത് പരാശര ഹോര ശാസ്ത്രം (BPHS)</strong>, <strong className="text-slate-400">ഫലദീപിക</strong> തുടങ്ങിയ പ്രാചീന ഗ്രന്ഥങ്ങളിലെ ശാസ്ത്രീയ തത്വങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്. ചിത്രാപക്ഷ (ലാഹിരി) അയനാംശവും അതീവ സൂക്ഷ്മമായ സ്വിസ് എഫെമെറിസ് (Swiss Ephemeris) വിവരങ്ങളും ഉപയോഗിച്ചാണ് ഗ്രഹനില കണക്കുകൂട്ടിയിരിക്കുന്നത്.</>
+                  ) : (
+                    <>Astrological calculations, yogas, doshas, and interpretations in this report are strictly based on the classical principles outlined in <strong className="text-slate-400">Brihat Parashara Hora Shastra (BPHS)</strong> and <strong className="text-slate-400">Phaladeepika</strong>. Planetary positions are computed using high-precision Swiss Ephemeris data with Lahiri (Chitra Paksha) Ayanamsa.</>
+                  )}
                 </p>
-                <p className="text-[10px] text-emerald-600/70 font-semibold mt-2 uppercase tracking-widest">Algorithmic Engine Verified against classical texts ✓</p>
+                <p className="text-[10px] text-emerald-600/70 font-semibold mt-2 uppercase tracking-widest">
+                  {lang === 'ml' ? 'പ്രാചീന ഗ്രന്ഥങ്ങളുമായി ഒത്തുനോക്കി ഉറപ്പുവരുത്തിയ കമ്പ്യൂട്ടർ അൽഗോരിതം ✓' : 'Algorithmic Engine Verified against classical texts ✓'}
+                </p>
               </section>
             </div>
           )}

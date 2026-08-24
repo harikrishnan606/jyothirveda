@@ -713,11 +713,11 @@ const Interpretation = (() => {
     const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key, lang) : key;
 
     return {
-      janmaRasi: `${t(moonRasi.name)} (${t(moonRasi.eng)})`,
-      janmaNakshatra: `${t(moonNak.name)} (Pada ${moonNak.pada})`,
-      lagnam: `${t(chart.lagnaRasi.name)} (${t(chart.lagnaRasi.eng)})`,
-      tithi: t(panchanga.tithi.name),
-      currentDasha: currentDasha ? t(currentDasha.summary) : 'N/A',
+      janmaRasi: lang === 'ml' ? t(moonRasi.name) : `${t(moonRasi.name)} (${t(moonRasi.eng)})`,
+      janmaNakshatra: lang === 'ml' ? `${t(moonNak.name)} (${moonNak.pada}-ാം പാദം)` : `${t(moonNak.name)} (Pada ${moonNak.pada})`,
+      lagnam: lang === 'ml' ? t(chart.lagnaRasi.name) : `${t(chart.lagnaRasi.name)} (${t(chart.lagnaRasi.eng)})`,
+      tithi: panchanga.tithi.name.split(' ').map(p => t(p)).join(' '),
+      currentDasha: currentDasha ? (lang === 'ml' ? `${t(currentDasha.maha.lord)} ദശ (ബാക്കി ${currentDasha.maha.remaining.replace('y', ' വർഷം').replace('m', ' മാസം')})` : `${currentDasha.maha.lord} Dasha (${currentDasha.maha.remaining} remaining)`) : 'N/A',
       vara: t(panchanga.vara.eng),
       yoga: t(panchanga.yoga.name),
       karana: t(panchanga.karana.name)
