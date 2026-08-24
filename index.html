@@ -7,12 +7,15 @@
     <meta name="description" content="JyothirVeda - Traditional Kerala Jyothisham calculator with real-time Vedic astrology computations">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script type="importmap">
     {
       "imports": {
         "react": "https://esm.sh/react@18.2.0",
+        "react-dom": "https://esm.sh/react-dom@18.2.0",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "lucide-react": "https://esm.sh/lucide-react@0.372.0"
+        "lucide-react": "https://esm.sh/lucide-react@0.372.0?deps=react@18.2.0",
+        "recharts": "https://esm.sh/recharts@2.12.7?deps=react@18.2.0,react-dom@18.2.0"
       }
     }
     </script>
@@ -30,6 +33,7 @@
     <script type="text/babel" data-type="module">
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import {
   Moon, Sun, Star, MapPin, Clock, Calendar, ChevronDown, ChevronUp,
   Activity, Award, Heart, Briefcase, Search, ShieldAlert, Sparkles, User,
@@ -241,6 +245,88 @@ function PlaceAutocomplete({ value, onSelect, onChangeText }) {
     </div>
   );
 }
+
+const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult }) => {
+  if (!dashaTimeline || dashaTimeline.length === 0) return null;
+
+  const data = [];
+  dashaTimeline.forEach((maha) => {
+     const mahaScore = Interpretation.getPlanetScore(maha.lord, chart, ashtakavargaResult);
+     const antars = window.DashaSystem.getAntarDasha(maha);
+     
+     antars.forEach((antar) => {
+        const antarScore = Interpretation.getPlanetScore(antar.lord, chart, ashtakavargaResult);
+        // Blended score: 60% Maha Lord, 40% Antar Lord
+        const blendedScore = (mahaScore * 0.6) + (antarScore * 0.4);
+        const year = antar.startDate.year + (antar.startDate.month / 12);
+        
+        data.push({ 
+          year: Number(year.toFixed(2)), 
+          score: Math.round(blendedScore), 
+          mahaLord: maha.lord,
+          antarLord: antar.lord,
+          label: `${maha.lord}-${antar.lord}`
+        });
+     });
+  });
+  
+  // Add an endpoint to close the graph smoothly
+  const lastMaha = dashaTimeline[dashaTimeline.length - 1];
+  const endYear = lastMaha.endDate.year + (lastMaha.endDate.month / 12);
+  const lastScore = data[data.length - 1].score;
+  data.push({ year: Number(endYear.toFixed(2)), score: lastScore, mahaLord: '', antarLord: '', label: 'End' });
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl backdrop-blur-md">
+          <p className="text-amber-400 font-bold font-serif mb-1">{payload[0].payload.label} Dasha</p>
+          <p className="text-slate-300 text-sm mb-1">Year: {Math.floor(label)}</p>
+          <p className="text-indigo-300 text-sm font-semibold">Experience Rating: {payload[0].value}/100</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="mt-8 bg-slate-900/40 p-6 rounded-xl border border-slate-700/50 shadow-2xl">
+       <h4 className="text-lg font-serif text-amber-400 mb-6 flex items-center gap-2">Experience Rating Trajectory</h4>
+       <div className="w-full h-64">
+         <ResponsiveContainer width="100%" height="100%">
+           <AreaChart
+             data={data}
+             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+           >
+             <defs>
+               <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                 <stop offset="5%" stopColor="#818cf8" stopOpacity={0.4}/>
+                 <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+               </linearGradient>
+             </defs>
+             <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+             <XAxis dataKey="year" stroke="#94a3b8" tickFormatter={(val) => Math.floor(val)} tick={{fill: '#94a3b8', fontSize: 12}} tickMargin={10} minTickGap={30} />
+             <YAxis domain={[0, 100]} stroke="#94a3b8" tick={{fill: '#94a3b8', fontSize: 12}} />
+             <Tooltip content={<CustomTooltip />} />
+             <ReferenceLine y={75} stroke="#10b981" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: 'Excellent', fill: '#10b981', fontSize: 10 }} />
+             <ReferenceLine y={50} stroke="#94a3b8" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: 'Average', fill: '#94a3b8', fontSize: 10 }} />
+             <ReferenceLine y={25} stroke="#f43f5e" strokeDasharray="3 3" opacity={0.5} label={{ position: 'insideTopRight', value: 'Challenging', fill: '#f43f5e', fontSize: 10 }} />
+             <Area 
+                type="monotone" 
+                dataKey="score" 
+                stroke="#818cf8" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorScore)" 
+                activeDot={{ r: 6, fill: '#fbbf24', stroke: '#0f172a', strokeWidth: 2 }} 
+             />
+           </AreaChart>
+         </ResponsiveContainer>
+       </div>
+       <p className="text-[11px] text-slate-500 mt-4 italic text-center">X-Axis: Years (Vimshottari Dasha) &nbsp;|&nbsp; Y-Axis: Predicted Experience (0-100) based on planetary dignity & Ashtakavarga.</p>
+    </div>
+  );
+};
 
 // ─── Main App ──────────────────────────────────────────────
 function JyothishamApp() {
@@ -550,11 +636,12 @@ function JyothishamApp() {
           <div className="space-y-1">
             {cr.dashaTimeline.map((d, i) => {
               const isCurrent = currentDasha && currentDasha.maha.lord === d.lord;
-              // Map infographic specific dasha labels
+              const score = Interpretation.getPlanetScore(d.lord, cr.chart, cr.ashtakavargaResult);
               let dashaLabel = '';
-              if (d.lord === 'Venus') dashaLabel = 'Golden Ed & Career';
-              if (d.lord === 'Sun') dashaLabel = 'Changes, Travel';
-              if (d.lord === 'Moon') dashaLabel = 'PEAK WEALTH, Golden Time';
+              if (score >= 75) dashaLabel = 'Outstanding Period';
+              else if (score >= 60) dashaLabel = 'Favorable Period';
+              else if (score < 40) dashaLabel = 'Challenging Period';
+              else dashaLabel = 'Average Period';
 
               return (
                 <div key={i} className={`flex items-center gap-3 p-2 rounded-lg text-sm transition-all duration-300 ${isCurrent ? 'bg-amber-500/10 border border-amber-500/30 shadow-lg shadow-amber-900/10 scale-[1.02]' : 'hover:bg-slate-800/50'}`}>
@@ -570,6 +657,8 @@ function JyothishamApp() {
                 </div>
               );
             })}
+            
+            <LifeGraph dashaTimeline={cr.dashaTimeline} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} />
           </div>
         </div>
       )

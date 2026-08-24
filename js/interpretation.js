@@ -511,6 +511,40 @@ const Interpretation = (() => {
     return insights;
   }
 
+  function getPlanetScore(planetName, chart, ashtakavargaResult) {
+    const pData = chart.planets[planetName];
+    if (!pData) return 50;
+
+    let score = 50;
+    
+    // Dignity
+    if (pData.dignity === 'Exalted') score += 25;
+    else if (pData.dignity === 'Own' || pData.dignity === 'Moolatrikona') score += 20;
+    else if (pData.dignity === 'Friend') score += 10;
+    else if (pData.dignity === 'Enemy') score -= 15;
+    else if (pData.dignity === 'Debilitated') score -= 25;
+
+    // Ashtakavarga of the house it occupies
+    if (ashtakavargaResult && ashtakavargaResult.houseStrengths) {
+      const hStrength = ashtakavargaResult.houseStrengths.find(h => h.house === pData.house);
+      if (hStrength) {
+        if (hStrength.bindus >= 30) score += 15;
+        else if (hStrength.bindus >= 25) score += 5;
+        else if (hStrength.bindus < 20) score -= 15;
+      }
+    }
+
+    // Natural Benefic/Malefic adjustments
+    if (planetName === 'Jupiter' || planetName === 'Venus') score += 10;
+    if (planetName === 'Saturn' || planetName === 'Mars' || planetName === 'Rahu' || planetName === 'Ketu') score -= 5;
+
+    // Kendra/Trikona placement
+    if ([1, 4, 7, 10, 5, 9].includes(pData.house)) score += 10;
+    if ([6, 8, 12].includes(pData.house)) score -= 15;
+
+    return Math.max(10, Math.min(95, score));
+  }
+
   function calculateDomainScore(house, lordData, houseStrength, currentDasha, lordPlanet) {
     let score = 50; // Base
 
@@ -727,6 +761,8 @@ const Interpretation = (() => {
     interpretRemedies,
     generateInsights,
     generateCoreData,
+    interpretHealthDetails,
+    getPlanetScore,
     generateLifePredictions,
     PLANET_REMEDIES,
     LAGNA_TRAITS
