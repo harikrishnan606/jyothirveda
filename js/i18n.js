@@ -401,6 +401,51 @@ const i18nData = {
     "Effects mitigated": "ദോഷ ഫലങ്ങൾ ലഘൂകരിച്ചു",
     "All 7 planets hemmed between Rahu-Ketu axis": "എല്ലാ 7 ഗ്രഹങ്ങളും രാഹു-കേതു അച്ചുതണ്ടിൽ കുടുങ്ങിക്കിടക്കുന്നു",
     "No planet (Mars-Saturn) in 2nd or 12th from Moon": "ചന്ദ്രനിൽ നിന്ന് 2 അല്ലെങ്കിൽ 12 ഭാവങ്ങളിൽ ഗ്രഹങ്ങളില്ല",
+
+    // Dasha Timeline labels
+    "Outstanding Period": "മികച്ച കാലഘട്ടം",
+    "Favorable Period": "അനുകൂല കാലഘട്ടം",
+    "Challenging Period": "പ്രതികൂല കാലഘട്ടം",
+    "Average Period": "സാധാരണ കാലഘട്ടം",
+
+    // Graph reference line labels
+    "Excellent": "മികവ്",
+    "Average": "സാധാരണ",
+    "Challenging": "പ്രതികൂലം",
+    "End": "അവസാനം",
+
+    // Ashtakavarga
+    "valid": "ശരിയാണ്",
+    "expected 337": "പ്രതീക്ഷിത: 337",
+
+    // Form/profile
+    "Save Profile": "പ്രൊഫൈൽ സൂക്ഷിക്കുക",
+    "Saved Profiles": "സൂക്ഷിച്ച പ്രൊഫൈലുകൾ",
+
+    // Dosha section labels
+    "DISPUTED": "തർക്കവിഷയം",
+    "Partial": "ഭാഗിക",
+    "Full": "പൂർണ്ണം",
+    "Absent": "ഇല്ല",
+    "Not applicable": "ബാധകമല്ല",
+    "N/A": "ബാധകമല്ല",
+    "Kala Sarpa Dosha": "കാല സർപ്പ ദോഷം",
+    "Kemadruma Dosha": "കേമദ്രുമ ദോഷം",
+    "No planet (Mars-Saturn) in 2nd or 12th from Moon": "ചന്ദ്രനിൽ നിന്ന് 2/12 ഭാവങ്ങളിൽ ഗ്രഹങ്ങളില്ല",
+    "All planets between Rahu and Ketu — Kala Sarpa configuration present": "രാഹു-കേതുക്കൾക്കിടയിൽ എല്ലാ ഗ്രഹങ്ങളും — കാലസർപ്പ ദോഷമുണ്ട്",
+    "Karmic delays and sudden reversals in life themes": "കർമ്മ താമസങ്ങളും ജീവിതത്തിലെ അപ്രതീക്ഷിത തിരിച്ചടികളും",
+    "Possible periods of isolation or financial instability": "ഒറ്റപ്പെടലിന്റെ അല്ലെങ്കിൽ സാമ്പത്തിക അസ്ഥിരതയുടെ ഘട്ടങ്ങൾ",
+    "No planes flanking the Moon — Kemadruma present": "ചന്ദ്രനു ചുറ്റും ഗ്രഹങ്ങളില്ല — കേമദ്രുമ ദോഷം",
+    "Kala Sarpa Dosha is not found in core classical texts (BPHS). It is a popular/later tradition.": "കാലസർപ്പ ദോഷം ക്ലാസിക്കൽ ഗ്രന്ഥങ്ങളിൽ (BPHS) ഉൾപ്പെടുന്നില്ല. ഇത് ഒരു ജനകീയ/ആധുനിക പാരമ്പര്യം മാത്രമാണ്.",
+
+    // Wisdom/Jupiter Yoga
+    "Wisdom, wealth, and respect; activated during Jupiter/Moon Dashas": "ജ്ഞാനം, ധനം, ബഹുമാനം; വ്യാഴ-ചന്ദ്ര ദശകളിൽ സജീവമാകും",
+    "Weakened by Jupiter's debilitation": "വ്യാഴത്തിന്റെ നീചത്വം മൂലം ദുർബലമായി",
+
+    // Mercury combust
+    "Weak (Mercury combust)": "ദുർബലം (ബുധൻ കൂടിച്ചേർന്ന്)",
+    "Mercury is combust, weakening the yoga": "ബുധൻ ദഹിക്കപ്പെട്ടതിനാൽ യോഗം ദുർബലമായി",
+    "Intelligence and communication skills": "ബുദ്ധിശക്തിയും ആശയവിനിമയ കഴിവും"
   }
 };
 
