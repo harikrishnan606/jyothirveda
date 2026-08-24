@@ -332,6 +332,111 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult, lang = 'en' }) =>
   );
 };
 
+// ─── Dasha Timeline Section Component ────────────────────────
+const DASHA_THEMES = {
+  Sun:     { en: 'Authority, self-confidence, career & status', ml: 'അധികാരം, ആത്മവിശ്വാസം, ഔദ്യോഗിക പുരോഗതി' },
+  Moon:    { en: 'Emotions, home, mother & mental peace', ml: 'വൈകാരിക ജീവിതം, ഗൃഹം, മാനസിക ശാന്തി' },
+  Mars:    { en: 'Energy, courage, siblings & property matters', ml: 'ഊർജ്ജം, ധൈര്യം, സഹോദര ബന്ധം, ഭൂ-സ്വത്ത്' },
+  Mercury: { en: 'Communication, business, education & intellect', ml: 'ആശയവിനിമയം, വ്യാപാരം, വിദ്യ, ബൗദ്ധിക ശക്തി' },
+  Jupiter: { en: 'Wisdom, prosperity, children & spiritual growth', ml: 'ജ്ഞാനം, സമൃദ്ധി, സന്താന ഭാഗ്യം, ആത്മീയ വളർച്ച' },
+  Venus:   { en: 'Relationships, luxury, arts & material pleasures', ml: 'പ്രണയം, ആഡംബരം, കല, ഭൗതിക സുഖഭോഗം' },
+  Saturn:  { en: 'Discipline, karma, hardships & long-term gains', ml: 'അനുശാസനം, കർമ്മഫലം, ദൈർഘ്യമേറിയ ലക്ഷ്യ പ്രാപ്തി' },
+  Rahu:    { en: 'Ambition, foreigners, unconventional paths & illusions', ml: 'അഭിലാഷം, വിദേശ ബന്ധം, അസാധാരണ മാർഗ്ഗങ്ങൾ' },
+  Ketu:    { en: 'Spirituality, detachment, past karma & liberation', ml: 'ആത്മീയത, വൈരാഗ്യം, കർമ്മ ബന്ധ മോക്ഷം' }
+};
+
+const DashaSection = ({ dashaTimeline, currentDasha, chart, ashtakavargaResult, lang }) => {
+  const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key, lang) : key;
+  const [expandedDasha, setExpandedDasha] = React.useState(null);
+
+  return (
+    <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+      <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Life Periods (120-Year Cycle)')}</h3>
+      {currentDasha && (
+        <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl mb-4">
+          <p className="text-xs text-indigo-400 font-semibold uppercase tracking-widest mb-1">{t('Currently Running')}</p>
+          <p className="text-white text-lg font-serif font-bold">
+            {t(currentDasha.maha.lord)} <span className="text-slate-400 font-normal text-sm">/ {t(currentDasha.antar.lord)} / {t(currentDasha.pratyantar.lord)}</span>
+          </p>
+          <p className="text-xs text-slate-400 mt-2">
+            {t('Maha')}: <span className="text-slate-300 font-mono">{currentDasha.maha.startDate} → {currentDasha.maha.endDate}</span>
+            <span className="ml-2 text-amber-400">({lang === 'ml' ? currentDasha.maha.remaining.replace('y', ' വർഷം').replace('m', ' മാസം') + ' ബാക്കി' : currentDasha.maha.remaining + ' left'})</span>
+          </p>
+        </div>
+      )}
+      <div className="space-y-2">
+        {dashaTimeline.map((d, i) => {
+          const isCurrent = currentDasha && currentDasha.maha.lord === d.lord;
+          const score = Interpretation.getPlanetScore(d.lord, chart, ashtakavargaResult);
+          const isExpanded = expandedDasha === i;
+
+          let dashaLabel = '';
+          let labelColor = 'text-slate-400';
+          if (score >= 75) { dashaLabel = t('Outstanding Period'); labelColor = 'text-emerald-400'; }
+          else if (score >= 60) { dashaLabel = t('Favorable Period'); labelColor = 'text-green-400'; }
+          else if (score < 40) { dashaLabel = t('Challenging Period'); labelColor = 'text-rose-400'; }
+          else { dashaLabel = t('Average Period'); labelColor = 'text-slate-400'; }
+
+          const theme = DASHA_THEMES[d.lord];
+          const themeText = lang === 'ml' ? theme?.ml : theme?.en;
+          const antars = DashaSystem.getAntarDasha(d);
+
+          return (
+            <div key={i} className={`rounded-xl border transition-all duration-300 overflow-hidden ${isCurrent ? 'border-amber-500/40 bg-amber-500/5 shadow-lg shadow-amber-900/10' : 'border-slate-700/40 bg-slate-900/30 hover:bg-slate-800/40'}`}>
+              <button
+                onClick={() => setExpandedDasha(isExpanded ? null : i)}
+                className="w-full flex items-center gap-3 p-3 text-sm text-left"
+              >
+                <div className="flex flex-col w-28 flex-shrink-0">
+                  <span className={`font-mono text-xs ${isCurrent ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>{d.startDate.dateStr}</span>
+                  <span className="font-mono text-[10px] text-slate-600">→ {d.endDate.dateStr}</span>
+                </div>
+                <div className={`flex-1 h-2 rounded-full overflow-hidden bg-slate-800/80 ${isCurrent ? 'ring-1 ring-amber-400/50' : ''}`}>
+                  <div className={`h-full rounded-full transition-all duration-1000 ${isCurrent ? 'bg-gradient-to-r from-amber-500 to-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.5)]' : score >= 60 ? 'bg-emerald-600/60' : score < 40 ? 'bg-rose-600/60' : 'bg-indigo-600/50'}`} style={{ width: `${(d.totalYears / 20) * 100}%` }}></div>
+                </div>
+                <div className="flex flex-col items-end w-36 flex-shrink-0">
+                  <span className={`font-medium ${isCurrent ? 'text-amber-400 font-bold' : 'text-slate-200'}`}>{t(d.lord)}</span>
+                  <span className={`text-[10px] font-semibold tracking-wide ${labelColor}`}>{dashaLabel}</span>
+                </div>
+                <span className="w-10 text-[10px] text-slate-500 text-right font-mono flex-shrink-0">{d.durationStr}</span>
+                <span className={`text-slate-500 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                  <ChevronDown size={14} />
+                </span>
+              </button>
+              {isExpanded && (
+                <div className="px-3 pb-4 border-t border-slate-700/30">
+                  {themeText && (
+                    <p className="text-xs text-slate-400 italic mt-3 mb-3 border-l-2 border-indigo-500/40 pl-3">
+                      {themeText}
+                    </p>
+                  )}
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">{lang === 'ml' ? 'അന്തർ ദശകൾ' : 'Antar Dasha (Sub-Periods)'}</p>
+                  <div className="space-y-1">
+                    {antars.map((a, j) => {
+                      const isCurrentAntar = isCurrent && currentDasha && currentDasha.antar.lord === a.lord;
+                      const antarScore = Interpretation.getPlanetScore(a.lord, chart, ashtakavargaResult);
+                      return (
+                        <div key={j} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${isCurrentAntar ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-slate-800/30'}`}>
+                          <span className="font-mono text-[10px] text-slate-500 w-24 flex-shrink-0">{a.startDate.dateStr}</span>
+                          <div className="flex-1 h-1.5 rounded-full bg-slate-700/50">
+                            <div className={`h-full rounded-full ${isCurrentAntar ? 'bg-amber-400' : antarScore >= 60 ? 'bg-emerald-500/60' : antarScore < 40 ? 'bg-rose-500/60' : 'bg-indigo-500/40'}`} style={{ width: `${Math.min(100, antarScore)}%` }}></div>
+                          </div>
+                          <span className={`w-20 text-right font-medium ${isCurrentAntar ? 'text-amber-300' : 'text-slate-300'}`}>{t(a.lord)}</span>
+                          <span className="font-mono text-[9px] text-slate-600 w-16 text-right flex-shrink-0">{a.durationStr}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // ─── Main App ──────────────────────────────────────────────
 function JyothishamApp() {
   const IconGrid = ({ items }) => (
@@ -631,43 +736,10 @@ function JyothishamApp() {
       title: t('Dasha Timeline'),
       iconElement: <Calendar size={20} />,
       content: (
-        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
-          <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Life Periods (120-Year Cycle)')}</h3>
-          {currentDasha && (
-            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg mb-4">
-              <p className="text-sm text-indigo-300 font-medium">{t('Currently Running')}:</p>
-              <p className="text-white">{t(currentDasha.maha.lord)} / {t(currentDasha.antar.lord)} / {t(currentDasha.pratyantar.lord)}</p>
-              <p className="text-xs text-slate-400 mt-1">{t('Maha')}: {currentDasha.maha.startDate} → {currentDasha.maha.endDate} ({lang === 'ml' ? currentDasha.maha.remaining.replace('y', ' വർഷം').replace('m', ' മാസം') + ' ബാക്കി' : currentDasha.maha.remaining + ' left'})</p>
-            </div>
-          )}
-          <div className="space-y-1">
-            {cr.dashaTimeline.map((d, i) => {
-              const isCurrent = currentDasha && currentDasha.maha.lord === d.lord;
-              const score = Interpretation.getPlanetScore(d.lord, cr.chart, cr.ashtakavargaResult);
-              let dashaLabel = '';
-              if (score >= 75) dashaLabel = t('Outstanding Period');
-              else if (score >= 60) dashaLabel = t('Favorable Period');
-              else if (score < 40) dashaLabel = t('Challenging Period');
-              else dashaLabel = t('Average Period');
-
-              return (
-                <div key={i} className={`flex items-center gap-3 p-2 rounded-lg text-sm transition-all duration-300 ${isCurrent ? 'bg-amber-500/10 border border-amber-500/30 shadow-lg shadow-amber-900/10 scale-[1.02]' : 'hover:bg-slate-800/50'}`}>
-                  <span className={`w-20 font-mono text-xs ${isCurrent ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>{d.startDate.dateStr}</span>
-                  <div className={`flex-1 h-3 rounded-full overflow-hidden bg-slate-800/80 ${isCurrent ? 'ring-1 ring-amber-400/50' : ''} flex relative`}>
-                    <div className={`h-full rounded-full transition-all duration-1000 ${isCurrent ? 'bg-gradient-to-r from-amber-500 to-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-indigo-600/50'}`} style={{ width: `${(d.totalYears / 20) * 100}%` }}></div>
-                  </div>
-                  <div className="flex flex-col w-32 items-end">
-                    <span className={`text-xs ${isCurrent ? 'text-amber-400 font-bold text-sm' : 'text-slate-300 font-medium'}`}>{t(d.lord)}</span>
-                    {dashaLabel && <span className="text-[9px] text-emerald-400 font-semibold tracking-wider whitespace-nowrap">{dashaLabel}</span>}
-                  </div>
-                  <span className="w-12 text-[10px] text-slate-500 text-right font-mono">{d.durationStr}</span>
-                </div>
-              );
-            })}
-            
-            <LifeGraph dashaTimeline={cr.dashaTimeline} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} lang={lang} />
-          </div>
-        </div>
+        <React.Fragment>
+          <DashaSection dashaTimeline={cr.dashaTimeline} currentDasha={currentDasha} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} lang={lang} />
+          <LifeGraph dashaTimeline={cr.dashaTimeline} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} lang={lang} />
+        </React.Fragment>
       )
     },
     {
