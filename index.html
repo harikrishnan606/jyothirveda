@@ -477,7 +477,10 @@ function JyothishamApp() {
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
           <h3 className="text-xl font-serif text-amber-400 mb-2">Yogas Detected</h3>
           {cr.yogaDoshaResults.yogas.length === 0 ? <p className="text-slate-400">No significant yogas detected.</p> :
-            cr.yogaDoshaResults.yogas.map((y, i) => (
+            [...cr.yogaDoshaResults.yogas].sort((a, b) => {
+              const confVal = { 'HIGH': 3, 'MODERATE': 2, 'LOW': 1 };
+              return (confVal[b.confidence] || 0) - (confVal[a.confidence] || 0);
+            }).map((y, i) => (
               <div key={i} className="p-4 bg-slate-900/50 rounded-lg border border-slate-700/30 mb-3 shadow-lg shadow-black/20">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-amber-400 font-serif text-lg font-bold">{y.name}</span>
@@ -490,17 +493,22 @@ function JyothishamApp() {
             ))
           }
           <h3 className="text-xl font-serif text-amber-400 mt-6 mb-2">Doshas Checked</h3>
-          {cr.yogaDoshaResults.doshas.map((d, i) => (
+          {[...cr.yogaDoshaResults.doshas].sort((a, b) => (b.present === a.present ? 0 : b.present ? 1 : -1)).map((d, i) => (
             <div key={i} className={`p-3 rounded-lg border mb-2 ${d.present && d.strength !== 'Cancelled' && d.strength !== 'Cancelled/Mitigated' && d.strength !== 'Absent' ? 'bg-rose-900/20 border-rose-700/30' : 'bg-slate-900/50 border-slate-700/30'}`}>
               <div className="flex items-center gap-2 mb-1">
                 {d.present && d.strength !== 'Cancelled' && d.strength !== 'Cancelled/Mitigated' && d.strength !== 'Absent' ? <AlertTriangle size={14} className="text-rose-400" /> : <CheckCircle size={14} className="text-green-400" />}
                 <span className="text-white font-medium">{d.name}</span>
                 {d.disputed && <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 rounded">DISPUTED</span>}
               </div>
-              <p className="text-xs text-slate-400">{d.formation}</p>
-              {d.cancellation && d.cancellation !== 'N/A' && d.cancellation !== 'No cancellation' && (
-                <p className="text-xs text-green-400 mt-1">Cancellation: {d.cancellation}</p>
-              )}
+              <p className="text-xs text-slate-400 mb-2">{d.formation}</p>
+              <div className="mt-2 pt-2 border-t border-slate-700/50">
+                <p className={`text-sm ${d.present && d.strength !== 'Absent' ? 'text-amber-300' : 'text-emerald-400'}`}>{d.residual}</p>
+                {d.cancellation && d.cancellation !== 'N/A' && d.cancellation !== 'No cancellation' && (
+                  <p className="text-xs text-emerald-400 mt-1 font-medium flex items-center gap-1">
+                    <CheckCircle size={12} /> Mitigation: {d.cancellation}
+                  </p>
+                )}
+              </div>
             </div>
           ))}
         </div>
