@@ -20,7 +20,7 @@
     <script src="js/astro-engine.js?v=6"></script>
     <script src="js/vedic-core.js?v=2"></script>
     <script src="js/panchanga.js?v=2"></script>
-    <script src="js/dasha.js?v=2"></script>
+    <script src="js/dasha.js?v=3"></script>
     <script src="js/yoga-dosha.js?v=2"></script>
     <script src="js/ashtakavarga.js?v=2"></script>
     <script src="js/interpretation.js?v=5"></script>
@@ -690,7 +690,7 @@ function JyothishamApp() {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-slate-200 truncate">{h.name}</p>
-                          <p className="text-xs text-slate-400 truncate">{h.dob} • {h.place.split(',')[0]}</p>
+                          <p className="text-xs text-slate-400 truncate">{h.dob.split('-').reverse().join('/')} • {h.place.split(',')[0]}</p>
                         </div>
                         <button 
                           onClick={(e) => deleteProfile(e, i)}

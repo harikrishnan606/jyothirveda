@@ -94,7 +94,7 @@ const DashaSystem = (() => {
       year,
       month,
       day: Math.floor(day),
-      dateStr: `${year}-${String(month).padStart(2, '0')}-${String(Math.floor(day)).padStart(2, '0')}`
+      dateStr: `${String(Math.floor(day)).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`
     };
   }
 
