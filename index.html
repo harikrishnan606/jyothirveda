@@ -276,6 +276,33 @@ function JyothishamApp() {
     lng: '76.9583'
   });
 
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('jyothisha_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const saveProfile = () => {
+    const newHistory = [formData, ...history.filter(h => h.name !== formData.name || h.dob !== formData.dob)].slice(0, 10);
+    setHistory(newHistory);
+    localStorage.setItem('jyothisha_history', JSON.stringify(newHistory));
+  };
+
+  const loadProfile = (profile) => {
+    setFormData(profile);
+    if (sweReady) recalculate(profile);
+  };
+  
+  const deleteProfile = (e, index) => {
+    e.stopPropagation();
+    const newHistory = history.filter((_, i) => i !== index);
+    setHistory(newHistory);
+    localStorage.setItem('jyothisha_history', JSON.stringify(newHistory));
+  };
+
   const [sweReady, setSweReady] = useState(false);
 
   useEffect(() => {
@@ -643,7 +670,42 @@ function JyothishamApp() {
               </div>
             </div>
 
-            <div className="mt-8 p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/20 text-center">
+            <div className="mt-8 space-y-4">
+              <button 
+                onClick={saveProfile}
+                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold rounded-xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+              >
+                <CheckCircle size={18} /> Save Profile
+              </button>
+              
+              {history.length > 0 && (
+                <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-700">
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2"><Clock size={14} /> Saved Profiles</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    {history.map((h, i) => (
+                      <div 
+                        key={i}
+                        onClick={() => loadProfile(h)}
+                        className="flex items-center justify-between p-3 rounded-lg bg-slate-800 hover:bg-slate-700 cursor-pointer border border-slate-700 transition-colors group"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-200 truncate">{h.name}</p>
+                          <p className="text-xs text-slate-400 truncate">{h.dob} • {h.place.split(',')[0]}</p>
+                        </div>
+                        <button 
+                          onClick={(e) => deleteProfile(e, i)}
+                          className="p-2 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"
+                        >
+                          <XCircle size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/20 text-center">
               <p className="text-xs text-indigo-300 flex items-center justify-center gap-2">
                 <Activity size={14} className="animate-pulse" />
                 Results update automatically as you type.
