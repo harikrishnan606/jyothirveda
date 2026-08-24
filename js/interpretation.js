@@ -448,11 +448,16 @@ const Interpretation = (() => {
     const lord10Data = chart.planets[lord10];
     const careerScore = calculateDomainScore(10, lord10Data, house10Strength, currentDasha, lord10);
 
+    let careerKw = 'Steady Career Effort';
+    let careerIcon = 'Briefcase';
+    if (careerScore >= 75) { careerKw = 'High Career Growth'; careerIcon = 'TrendingUp'; }
+    else if (careerScore < 40) { careerKw = 'Career Challenges'; careerIcon = 'AlertTriangle'; }
+
     insights.push({
       id: 1,
-      keyword: careerScore > 65 ? 'High Career Growth' : 'Steady Career Effort',
+      keyword: careerKw,
       probability: careerScore,
-      icon: 'Briefcase'
+      icon: careerIcon
     });
 
     // Financial insight (2nd + 11th house)
@@ -462,11 +467,16 @@ const Interpretation = (() => {
     const lord2Data = chart.planets[lord2];
     const financeScore = calculateDomainScore(2, lord2Data, house2Strength, currentDasha, lord2);
 
+    let finKw = 'Financial Discipline';
+    let finIcon = 'Coins';
+    if (financeScore >= 75) { finKw = 'Wealth Accumulation'; finIcon = 'Activity'; }
+    else if (financeScore < 40) { finKw = 'Financial Restraints'; finIcon = 'AlertTriangle'; }
+
     insights.push({
       id: 2,
-      keyword: financeScore > 65 ? 'Wealth Accumulation' : 'Financial Discipline',
+      keyword: finKw,
       probability: financeScore,
-      icon: 'Activity'
+      icon: finIcon
     });
 
     // Health insight (6th house / Lagna)
@@ -478,11 +488,16 @@ const Interpretation = (() => {
     const lagnaLordData = chart.planets[lagnaLord];
     const healthScore = calculateHealthScore(lagnaLordData, house1Strength, house6Strength);
 
+    let healthKw = 'Health Routines Required';
+    let healthIcon = 'Activity';
+    if (healthScore >= 75) { healthKw = 'Strong Vitality'; healthIcon = 'Heart'; }
+    else if (healthScore < 40) { healthKw = 'Health Vulnerabilities'; healthIcon = 'ShieldAlert'; }
+
     insights.push({
       id: 3,
-      keyword: healthScore > 65 ? 'Strong Vitality' : 'Health Routines Required',
+      keyword: healthKw,
       probability: healthScore,
-      icon: 'Heart'
+      icon: healthIcon
     });
 
     // Sort by probability descending
