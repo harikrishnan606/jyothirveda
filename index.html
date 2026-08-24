@@ -265,7 +265,8 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult }) => {
           score: Math.round(blendedScore), 
           mahaLord: maha.lord,
           antarLord: antar.lord,
-          label: `${maha.lord}-${antar.lord}`
+          label: `${maha.lord}-${antar.lord}`,
+          dateStr: antar.startDate.dateStr
         });
      });
   });
@@ -274,15 +275,15 @@ const LifeGraph = ({ dashaTimeline, chart, ashtakavargaResult }) => {
   const lastMaha = dashaTimeline[dashaTimeline.length - 1];
   const endYear = lastMaha.endDate.year + (lastMaha.endDate.month / 12);
   const lastScore = data[data.length - 1].score;
-  data.push({ year: Number(endYear.toFixed(2)), score: lastScore, mahaLord: '', antarLord: '', label: 'End' });
+  data.push({ year: Number(endYear.toFixed(2)), score: lastScore, mahaLord: '', antarLord: '', label: 'End', dateStr: lastMaha.endDate.dateStr });
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl backdrop-blur-md">
           <p className="text-amber-400 font-bold font-serif mb-1">{payload[0].payload.label} Dasha</p>
-          <p className="text-slate-300 text-sm mb-1">Year: {Math.floor(label)}</p>
-          <p className="text-indigo-300 text-sm font-semibold">Experience Rating: {payload[0].value}/100</p>
+          <p className="text-slate-300 text-xs mb-1">Starts: <span className="font-mono text-emerald-300">{payload[0].payload.dateStr}</span></p>
+          <p className="text-indigo-300 text-sm font-semibold mt-2 border-t border-slate-700 pt-2">Experience: {payload[0].value}/100</p>
         </div>
       );
     }

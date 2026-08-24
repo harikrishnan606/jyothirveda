@@ -515,34 +515,35 @@ const Interpretation = (() => {
     const pData = chart.planets[planetName];
     if (!pData) return 50;
 
-    let score = 50;
+    let score = 45; // Start slightly below 50 to counteract inherent kendra/friend biases
     
     // Dignity
-    if (pData.dignity === 'Exalted') score += 25;
-    else if (pData.dignity === 'Own' || pData.dignity === 'Moolatrikona') score += 20;
-    else if (pData.dignity === 'Friend') score += 10;
+    if (pData.dignity === 'Exalted') score += 20;
+    else if (pData.dignity === 'Own' || pData.dignity === 'Moolatrikona') score += 15;
+    else if (pData.dignity === 'Friend') score += 5;
     else if (pData.dignity === 'Enemy') score -= 15;
     else if (pData.dignity === 'Debilitated') score -= 25;
 
-    // Ashtakavarga of the house it occupies
+    // Ashtakavarga of the house it occupies (Average bindus is ~28)
     if (ashtakavargaResult && ashtakavargaResult.houseStrengths) {
       const hStrength = ashtakavargaResult.houseStrengths.find(h => h.house === pData.house);
       if (hStrength) {
-        if (hStrength.bindus >= 30) score += 15;
-        else if (hStrength.bindus >= 25) score += 5;
-        else if (hStrength.bindus < 20) score -= 15;
+        if (hStrength.bindus >= 32) score += 15;
+        else if (hStrength.bindus >= 28) score += 5;
+        else if (hStrength.bindus < 24) score -= 10;
+        else if (hStrength.bindus < 20) score -= 20;
       }
     }
 
     // Natural Benefic/Malefic adjustments
     if (planetName === 'Jupiter' || planetName === 'Venus') score += 10;
-    if (planetName === 'Saturn' || planetName === 'Mars' || planetName === 'Rahu' || planetName === 'Ketu') score -= 5;
+    if (planetName === 'Saturn' || planetName === 'Mars' || planetName === 'Rahu' || planetName === 'Ketu') score -= 10; // Penalize malefics slightly more for baseline
 
-    // Kendra/Trikona placement
+    // Kendra/Trikona placement vs Dusthana
     if ([1, 4, 7, 10, 5, 9].includes(pData.house)) score += 10;
-    if ([6, 8, 12].includes(pData.house)) score -= 15;
+    if ([6, 8, 12].includes(pData.house)) score -= 20; // Harsher penalty for dusthana
 
-    return Math.max(10, Math.min(95, score));
+    return Math.max(5, Math.min(95, score));
   }
 
   function calculateDomainScore(house, lordData, houseStrength, currentDasha, lordPlanet) {
