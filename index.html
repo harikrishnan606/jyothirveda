@@ -17,13 +17,13 @@
     }
     </script>
     <!-- Load calculation modules -->
-    <script src="js/astro-engine.js"></script>
-    <script src="js/vedic-core.js"></script>
-    <script src="js/panchanga.js"></script>
-    <script src="js/dasha.js"></script>
-    <script src="js/yoga-dosha.js"></script>
-    <script src="js/ashtakavarga.js"></script>
-    <script src="js/interpretation.js"></script>
+    <script src="js/astro-engine.js?v=2"></script>
+    <script src="js/vedic-core.js?v=2"></script>
+    <script src="js/panchanga.js?v=2"></script>
+    <script src="js/dasha.js?v=2"></script>
+    <script src="js/yoga-dosha.js?v=2"></script>
+    <script src="js/ashtakavarga.js?v=2"></script>
+    <script src="js/interpretation.js?v=2"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -47,7 +47,7 @@ function computeChart(formData) {
     const lat = parseFloat(formData.lat);
     const lng = parseFloat(formData.lng);
 
-    if (isNaN(year) || isNaN(lat) || isNaN(lng)) return null;
+    if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute) || isNaN(lat) || isNaN(lng)) return null;
 
     // 1. Astronomical positions
     const positions = AstroEngine.computeAllPositions({
@@ -104,12 +104,13 @@ function computeChart(formData) {
     const remedies = Interpretation.interpretRemedies(chart, yogaDoshaResults);
     const insights = Interpretation.generateInsights(chart, currentDasha, ashtakavargaResult, yogaDoshaResults);
     const coreData = Interpretation.generateCoreData(chart, panchanga, currentDasha);
+    const lifePredictions = Interpretation.generateLifePredictions(chart, currentDasha);
 
     return {
       positions, chart, navamsaChart, rasiGrid, navamsaGrid,
       panchanga, dashaTimeline, currentDasha,
       yogaDoshaResults, ashtakavargaResult,
-      personality, career, wealth, remedies, insights, coreData
+      personality, career, wealth, remedies, insights, coreData, lifePredictions
     };
   } catch (e) {
     console.error('Chart computation error:', e);
@@ -230,6 +231,13 @@ function JyothishamApp() {
       iconElement: <Star size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          {cr.personality.tags && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {cr.personality.tags.map((tag, i) => (
+                <span key={i} className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs font-semibold uppercase tracking-wider">{tag}</span>
+              ))}
+            </div>
+          )}
           <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.personality.title}</h3>
           <p>{cr.personality.description}</p>
           <div className="mt-2 text-sm space-y-1">
@@ -242,9 +250,6 @@ function JyothishamApp() {
             <li><strong className="text-white">Challenges:</strong> {cr.personality.challenges}</li>
             <li><strong className="text-white">Hidden Potential:</strong> {cr.personality.hiddenPotential}</li>
           </ul>
-          {cr.personality.keyYogas.length > 0 && (
-            <p className="text-xs text-indigo-300 mt-3">Key Yogas supporting personality: {cr.personality.keyYogas.join(', ')}</p>
-          )}
         </div>
       )
     },
@@ -254,29 +259,87 @@ function JyothishamApp() {
       iconElement: <Briefcase size={20} />,
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          {cr.career.educationTags && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {cr.career.educationTags.map((tag, i) => (
+                <span key={i} className="px-3 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full text-xs font-semibold tracking-wider flex items-center gap-1"><BookOpen size={12} /> {tag}</span>
+              ))}
+            </div>
+          )}
           <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.career.title}</h3>
-          <p><strong className="text-white">10th Lord:</strong> {cr.career.tenthLord} ({cr.career.tenthLordDignity})</p>
-          <p><strong className="text-white">Career Trajectory:</strong> {cr.career.trajectory}</p>
-          <p><strong className="text-white">Suitable Fields:</strong> {cr.career.suitableFields}</p>
-          {cr.career.occupants.length > 0 && <p><strong className="text-white">10th House Occupants:</strong> {cr.career.occupants.join(', ')}</p>}
-          {cr.career.aspectedBy.length > 0 && <p><strong className="text-white">10th House Aspected By:</strong> {cr.career.aspectedBy.join(', ')}</p>}
-          <p className="text-xs text-slate-500 mt-2">Confidence: {cr.career.confidence}</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Career Fields</p>
+              <p className="text-sm text-white font-medium">{cr.career.suitableFields}</p>
+            </div>
+            <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Recognition</p>
+              <p className="text-sm text-white font-medium">{cr.career.recognition}</p>
+            </div>
+            <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30 md:col-span-2 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Financial Return</p>
+                <p className="text-sm text-amber-400 font-medium">{cr.career.financialGain}</p>
+              </div>
+              <Award size={24} className="text-amber-500/50" />
+            </div>
+          </div>
+          
+          <div className="mt-4 text-sm space-y-1">
+            <p><strong className="text-slate-400">10th Lord:</strong> {cr.career.tenthLord} ({cr.career.tenthLordDignity})</p>
+            {cr.career.occupants.length > 0 && <p><strong className="text-slate-400">Occupants:</strong> {cr.career.occupants.join(', ')}</p>}
+          </div>
         </div>
       )
     },
     {
-      id: 'wealth',
-      title: 'Wealth & Fortune',
-      iconElement: <Award size={20} />,
+      id: 'life',
+      title: 'Key Life Predictions',
+      iconElement: <Activity size={20} />,
       content: (
-        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
-          <h3 className="text-xl font-serif text-amber-400 mb-2">{cr.wealth.title}</h3>
-          <p><strong className="text-white">2nd Lord:</strong> {cr.wealth.secondLord}</p>
-          <p><strong className="text-white">11th Lord:</strong> {cr.wealth.eleventhLord}</p>
-          <p><strong className="text-white">Jupiter's Influence:</strong> {cr.wealth.jupiterAspect}</p>
-          <p><strong className="text-white">2nd House SAV:</strong> {cr.wealth.house2SAV}</p>
-          <p><strong className="text-white">11th House SAV:</strong> {cr.wealth.house11SAV}</p>
-          <p className="mt-2 font-medium text-amber-300">{cr.wealth.overall}</p>
+        <div className="space-y-6 text-slate-300 leading-relaxed font-sans">
+          <div>
+            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2 mb-2"><Heart size={14} /> Marriage & Partner</h3>
+            <div className="pl-6 border-l-2 border-slate-700 space-y-2">
+              <p className="text-sm"><strong className="text-white">Timing:</strong> {cr.lifePredictions.marriage.timing}</p>
+              <p className="text-sm"><strong className="text-white">Type:</strong> {cr.lifePredictions.marriage.type}</p>
+              <p className="text-sm"><strong className="text-white">Partner Traits:</strong> {cr.lifePredictions.marriage.partnerTraits.join(', ')}</p>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2 mb-2"><User size={14} /> Family & Children</h3>
+            <div className="pl-6 border-l-2 border-slate-700">
+              <p className="text-sm text-white">{cr.lifePredictions.children}</p>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2 mb-2"><Activity size={14} /> Foreign Travel & Residence</h3>
+            <div className="pl-6 border-l-2 border-slate-700">
+              <p className="text-sm text-white">{cr.lifePredictions.travel}</p>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-rose-400 uppercase tracking-widest flex items-center gap-2 mb-2"><ShieldAlert size={14} /> Health Cautions</h3>
+            <div className="pl-6 border-l-2 border-slate-700 space-y-3">
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Vulnerable Areas</p>
+                <div className="flex flex-wrap gap-2">
+                  {cr.lifePredictions.health.vulnerabilities.map((v, i) => (
+                    <span key={i} className="px-2 py-1 bg-rose-900/20 text-rose-300 rounded text-xs">{v}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Behavioral Cautions</p>
+                <div className="flex flex-wrap gap-2">
+                  {cr.lifePredictions.health.cautions.map((c, i) => (
+                    <span key={i} className="px-2 py-1 bg-slate-800 text-slate-300 rounded border border-slate-700 text-xs">{c}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )
     },
@@ -289,13 +352,14 @@ function JyothishamApp() {
           <h3 className="text-xl font-serif text-amber-400 mb-2">Yogas Detected</h3>
           {cr.yogaDoshaResults.yogas.length === 0 ? <p className="text-slate-400">No significant yogas detected.</p> :
             cr.yogaDoshaResults.yogas.map((y, i) => (
-              <div key={i} className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30 mb-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${y.confidence === 'HIGH' ? 'bg-green-500/20 text-green-400' : y.confidence === 'MODERATE' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'}`}>{y.confidence}</span>
-                  <span className="text-white font-medium">{y.name}</span>
+              <div key={i} className="p-4 bg-slate-900/50 rounded-lg border border-slate-700/30 mb-3 shadow-lg shadow-black/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-amber-400 font-serif text-lg font-bold">{y.name}</span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ml-auto ${y.confidence === 'HIGH' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-500/20 text-slate-400'}`}>{y.confidence}</span>
                 </div>
+                {y.effect && <p className="text-sm font-medium text-white mb-2 bg-indigo-500/10 px-3 py-1.5 rounded border border-indigo-500/20">{y.effect}</p>}
                 <p className="text-xs text-slate-400">{y.rule}</p>
-                <p className="text-xs text-slate-300 mt-1">{y.formation}</p>
+                <p className="text-[11px] text-slate-500 mt-1">{y.formation}</p>
               </div>
             ))
           }
@@ -352,14 +416,23 @@ function JyothishamApp() {
           <div className="space-y-1">
             {cr.dashaTimeline.map((d, i) => {
               const isCurrent = currentDasha && currentDasha.maha.lord === d.lord;
+              // Map infographic specific dasha labels
+              let dashaLabel = '';
+              if (d.lord === 'Venus') dashaLabel = 'Golden Ed & Career';
+              if (d.lord === 'Sun') dashaLabel = 'Changes, Travel';
+              if (d.lord === 'Moon') dashaLabel = 'PEAK WEALTH, Golden Time';
+
               return (
-                <div key={i} className={`flex items-center gap-3 p-2 rounded-lg text-sm ${isCurrent ? 'bg-amber-500/10 border border-amber-500/20' : 'hover:bg-slate-800/50'}`}>
+                <div key={i} className={`flex items-center gap-3 p-2 rounded-lg text-sm transition-all duration-300 ${isCurrent ? 'bg-amber-500/10 border border-amber-500/30 shadow-lg shadow-amber-900/10 scale-[1.02]' : 'hover:bg-slate-800/50'}`}>
                   <span className={`w-20 font-mono text-xs ${isCurrent ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>{d.startDate.dateStr}</span>
-                  <div className={`flex-1 h-2 rounded-full overflow-hidden bg-slate-800 ${isCurrent ? 'ring-1 ring-amber-400/50' : ''}`}>
-                    <div className={`h-full rounded-full ${isCurrent ? 'bg-amber-400' : 'bg-indigo-500/50'}`} style={{ width: `${(d.totalYears / 20) * 100}%` }}></div>
+                  <div className={`flex-1 h-3 rounded-full overflow-hidden bg-slate-800/80 ${isCurrent ? 'ring-1 ring-amber-400/50' : ''} flex relative`}>
+                    <div className={`h-full rounded-full transition-all duration-1000 ${isCurrent ? 'bg-gradient-to-r from-amber-500 to-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-indigo-600/50'}`} style={{ width: `${(d.totalYears / 20) * 100}%` }}></div>
                   </div>
-                  <span className={`w-16 text-xs text-right ${isCurrent ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>{d.lord}</span>
-                  <span className="w-12 text-xs text-slate-500 text-right">{d.durationStr}</span>
+                  <div className="flex flex-col w-32 items-end">
+                    <span className={`text-xs ${isCurrent ? 'text-amber-400 font-bold text-sm' : 'text-slate-300 font-medium'}`}>{d.lord}</span>
+                    {dashaLabel && <span className="text-[9px] text-emerald-400 font-semibold tracking-wider whitespace-nowrap">{dashaLabel}</span>}
+                  </div>
+                  <span className="w-12 text-[10px] text-slate-500 text-right font-mono">{d.durationStr}</span>
                 </div>
               );
             })}

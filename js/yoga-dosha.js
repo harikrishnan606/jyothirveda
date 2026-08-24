@@ -125,6 +125,7 @@ const YogaDosha = (() => {
             formation: `${connectionType} in House ${p1Data.house}${connectionType === 'Conjunction' ? '' : ` and ${p2Data.house}`}`,
             strength,
             planets: [p1, p2],
+            effect: 'High status, authority, career success',
             confidence,
             cancellation: null,
             residual: 'Active when Dasha of either planet operates',
@@ -146,6 +147,7 @@ const YogaDosha = (() => {
           formation: `${planet} in House ${pData.house} (${pData.rasi.name})`,
           strength: isStrong ? 'Strong' : 'Moderate',
           planets: [planet],
+          effect: 'Effortless success, prominent position',
           confidence: isStrong ? 'HIGH' : 'MODERATE',
           cancellation: null,
           residual: `Activated during ${planet} Maha/Antar Dasha`,
@@ -185,6 +187,7 @@ const YogaDosha = (() => {
             formation: `Conjunction in House ${dData.house}`,
             strength: 'Moderate',
             planets: [dLord, tLord],
+            effect: 'Great financial gain, wealth accumulation',
             confidence: 'MODERATE',
             cancellation: null,
             residual: 'Wealth accumulation during relevant Dashas',
@@ -217,6 +220,13 @@ const YogaDosha = (() => {
       const isStrong = pData.dignity === 'Exalted' || pData.dignity === 'Own' || pData.dignity === 'Moolatrikona';
       const formed = inKendra && isStrong;
 
+      let effectStr = 'Outstanding results in planet\'s domain';
+      if (planet === 'Jupiter') effectStr = 'High status, wisdom, recognition (Hamsa)';
+      else if (planet === 'Venus') effectStr = 'Wealth, luxury, artistic success (Malavya)';
+      else if (planet === 'Saturn') effectStr = 'Longevity, leadership, success via effort (Shasa)';
+      else if (planet === 'Mars') effectStr = 'Courage, military/police success, property (Ruchaka)';
+      else if (planet === 'Mercury') effectStr = 'Outstanding education, excellent communication (Bhadra)';
+
       results.push({
         name: `${yogaName} Yoga (Pancha Mahapurusha)`,
         type: 'yoga',
@@ -227,6 +237,7 @@ const YogaDosha = (() => {
           `Not formed: ${planet} in ${pData.rasi.name} (${pData.dignity}), House ${pData.house}`,
         formed,
         strength: formed ? 'Strong' : 'Absent',
+        effect: formed ? effectStr : null,
         confidence: formed ? 'HIGH' : 'N/A',
         cancellation: null,
         residual: formed ? `Active during ${planet} Dasha` : 'Not applicable',
@@ -255,6 +266,7 @@ const YogaDosha = (() => {
         rule: 'Jupiter in a Kendra from Moon',
         formation: `Jupiter in ${jupiter.rasi.name} (House ${jupHouseFromMoon} from Moon)`,
         strength: isStrong ? 'Strong' : 'Weak (Jupiter debilitated)',
+        effect: 'Respected, virtuous, lasting reputation',
         confidence: isStrong ? 'HIGH' : 'LOW',
         cancellation: isStrong ? null : 'Weakened by Jupiter\'s debilitation',
         residual: 'Wisdom, wealth, and respect; activated during Jupiter/Moon Dashas',
@@ -280,6 +292,7 @@ const YogaDosha = (() => {
         rule: 'Sun-Mercury conjunction',
         formation: `Sun and Mercury conjunct in House ${sun.house} (${sun.rasi.name})`,
         strength: isCombust ? 'Weak (Mercury combust)' : 'Moderate',
+        effect: 'Intelligence, strong communication, success in business',
         confidence: isCombust ? 'LOW' : 'MODERATE',
         cancellation: isCombust ? 'Mercury is combust, weakening the yoga' : null,
         residual: 'Intelligence and communication skills',
@@ -309,6 +322,7 @@ const YogaDosha = (() => {
           rule: `Lord of ${dusthana}th house placed in another dusthana`,
           formation: `${lord} (lord of ${dusthana}th) in House ${lordData.house}`,
           strength: 'Moderate',
+          effect: 'Success through adversity; gains from unexpected sources',
           confidence: 'MODERATE',
           cancellation: null,
           residual: 'Success through adversity; gains from unexpected sources during relevant Dasha',
@@ -364,6 +378,7 @@ const YogaDosha = (() => {
           rule: `Debilitated ${planet} with cancellation`,
           formation: `${planet} debilitated in ${pData.rasi.name}; cancelled by ${reason}`,
           strength: 'Moderate',
+          effect: 'Rise from humble beginnings',
           confidence: 'MODERATE',
           cancellation: reason,
           residual: `Rise from humble/difficult beginnings during ${planet} Dasha`,
