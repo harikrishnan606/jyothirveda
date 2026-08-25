@@ -1100,7 +1100,7 @@ function JyothishamApp() {
                     ].map(([label, value, isHighlight, isDasha], i) => (
                       <div key={i} className="flex justify-between items-center py-3">
                         <span className="text-slate-400 text-sm">{label}</span>
-                        <span className={`font-medium ${isHighlight ? 'text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded' : isDasha ? 'text-indigo-300' : 'text-white'}`}>{value}</span>
+                        <span className={`font-medium text-right ${isHighlight ? 'text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded' : isDasha ? 'text-indigo-300' : 'text-white'}`}>{value}</span>
                       </div>
                     ))}
                   </GlassCard>
