@@ -1100,7 +1100,7 @@ const Interpretation = (() => {
 
     const evaluatePlanet = (planetName) => {
       const pData = chart.planets[planetName];
-      if (!pData) return { score: 50, theme: 'Neutral' };
+      if (!pData) return { score: 50, theme: 'Neutral', pData: null };
       
       let score = 50;
       if (pData.dignity === 'Exalted' || pData.dignity === 'Own' || pData.dignity === 'Moolatrikona') score += 20;
@@ -1124,16 +1124,46 @@ const Interpretation = (() => {
       if (planetName === 'Rahu') { theme = lang === 'ml' ? 'അപ്രതീക്ഷിത മാറ്റങ്ങൾ, വിദേശയാത്ര' : 'Sudden Changes, Foreign Matters'; icon = 'Zap'; }
       if (planetName === 'Ketu') { theme = lang === 'ml' ? 'ആത്മീയത, വിരക്തി, തടസ്സങ്ങൾ' : 'Spirituality, Detachment, Obstacles'; icon = 'Ban'; }
 
-      return { score, theme, icon };
+      return { score, theme, icon, pData };
     };
 
     const antarEval = evaluatePlanet(currentDasha.antar.lord);
     const pratyantarEval = evaluatePlanet(currentDasha.pratyantar.lord);
 
-    const getPredictionText = (score) => {
-      if (score >= 70) return lang === 'ml' ? 'വളരെ അനുകൂലമായ സമയം. പുതിയ കാര്യങ്ങൾ തുടങ്ങാൻ ഉത്തമം.' : 'Highly favorable period. Great for starting new ventures and seeing growth.';
-      if (score >= 50) return lang === 'ml' ? 'സാധാരണ ഫലങ്ങൾ ലഭിക്കുന്ന സമയം. സ്ഥിരമായ പ്രയത്നം ആവശ്യമാണ്.' : 'Moderate period. Steady effort will yield results without major disruptions.';
-      return lang === 'ml' ? 'ചെറിയ തടസ്സങ്ങൾക്ക് സാധ്യത. സുപ്രധാന തീരുമാനങ്ങൾ എടുക്കുമ്പോൾ ശ്രദ്ധിക്കുക.' : 'Challenging period. Be cautious with major decisions and practice patience.';
+    const getPredictionText = (planetName, pData, score) => {
+      let text = '';
+      
+      // 1. Overall Favorability
+      if (score >= 70) text += lang === 'ml' ? 'വളരെ അനുകൂലമായ സമയമാണിത്. ' : 'This is a highly favorable period. ';
+      else if (score >= 50) text += lang === 'ml' ? 'സാധാരണ ഫലങ്ങൾ ലഭിക്കുന്ന സമയമാണിത്. ' : 'This is a moderate period requiring steady effort. ';
+      else text += lang === 'ml' ? 'ചെറിയ തടസ്സങ്ങൾക്ക് സാധ്യതയുള്ള സമയമാണിത്. ' : 'This period may present some challenges or delays. ';
+
+      // 2. Planet Specific Action
+      const planetActions = {
+        Sun: lang === 'ml' ? 'ഔദ്യോഗിക കാര്യങ്ങളിലും നേതൃത്വത്തിലും ശ്രദ്ധ കേന്ദ്രീകരിക്കാൻ ഉത്തമം.' : 'Focus on career advancement, taking leadership roles, and building confidence.',
+        Moon: lang === 'ml' ? 'വൈകാരിക സന്തുലിതാവസ്ഥയും കുടുംബകാര്യങ്ങളും പ്രധാനമാകും.' : 'Emotional balance, home environment, and personal well-being will be in focus.',
+        Mars: lang === 'ml' ? 'പുതിയ കാര്യങ്ങൾ തുടങ്ങാനുള്ള ഊർജ്ജം ലഭിക്കും. കോപം നിയന്ത്രിക്കുക.' : 'You will have high energy to tackle tasks, but avoid impulsive decisions or conflicts.',
+        Mercury: lang === 'ml' ? 'പഠനം, ആശയവിനിമയം, സാമ്പത്തിക ഇടപാടുകൾ എന്നിവയ്ക്ക് മികച്ച സമയം.' : 'Great time for learning, networking, business negotiations, and communication.',
+        Jupiter: lang === 'ml' ? 'സാമ്പത്തിക വളർച്ചയ്ക്കും അറിവ് നേടുന്നതിനും അനുകൂലം.' : 'Excellent for financial growth, higher learning, and seeking guidance or mentorship.',
+        Venus: lang === 'ml' ? 'ബന്ധങ്ങൾ മെച്ചപ്പെടുത്താനും സുഖസൗകര്യങ്ങൾക്കും മുൻഗണന നൽകുക.' : 'Focus on harmony in relationships, creative pursuits, and enjoying comforts.',
+        Saturn: lang === 'ml' ? 'അച്ചടക്കത്തോടെയുള്ള കഠിനാധ്വാനം ആവശ്യമാണ്. കുറുക്കുവഴികൾ ഒഴിവാക്കുക.' : 'Demands strict discipline, patience, and hard work. Shortcuts will not work now.',
+        Rahu: lang === 'ml' ? 'അപ്രതീക്ഷിത മാറ്റങ്ങൾക്കും പുതിയ അവസരങ്ങൾക്കും സാധ്യത.' : 'Expect unexpected changes or unconventional opportunities. Avoid risky speculations.',
+        Ketu: lang === 'ml' ? 'ആത്മീയ കാര്യങ്ങളിലും ഗവേഷണത്തിലും താല്പര്യം വർദ്ധിക്കും.' : 'A good time for introspection, spiritual growth, or wrapping up old projects.'
+      };
+      if (planetActions[planetName]) text += planetActions[planetName] + ' ';
+
+      // 3. Dignity Context
+      if (!pData) return text;
+      
+      if (pData.dignity === 'Exalted' || pData.dignity === 'Own' || pData.dignity === 'Moolatrikona') {
+        text += lang === 'ml' ? 'ഗ്രഹത്തിന്റെ ശക്തമായ നില മികച്ച ഫലങ്ങൾ നൽകും.' : 'The ruling planet is exceptionally strong in your chart, ensuring success and removing obstacles easily.';
+      } else if (pData.dignity === 'Debilitated' || pData.house === 6 || pData.house === 8 || pData.house === 12) {
+        text += lang === 'ml' ? 'ആരോഗ്യ കാര്യങ്ങളിലും സാമ്പത്തിക ഇടപാടുകളിലും കൂടുതൽ ശ്രദ്ധ ആവശ്യമാണ്.' : 'Since the planet is weak or poorly placed in your birth chart, take extra care of your health and avoid major financial risks.';
+      } else {
+        text += lang === 'ml' ? 'സ്ഥിരമായ പ്രയത്നത്തിലൂടെ നല്ല ഫലങ്ങൾ പ്രതീക്ഷിക്കാം.' : 'Consistent effort will bring proportional rewards during this phase.';
+      }
+
+      return text;
     };
 
     return {
@@ -1141,7 +1171,7 @@ const Interpretation = (() => {
         lord: currentDasha.antar.lord,
         period: lang === 'ml' ? 'ഈ വർഷത്തെ ഫലം (അപഹാരം)' : 'This Year (Antar Dasha)',
         theme: antarEval.theme,
-        prediction: getPredictionText(antarEval.score),
+        prediction: getPredictionText(currentDasha.antar.lord, antarEval.pData, antarEval.score),
         icon: antarEval.icon,
         score: antarEval.score
       },
@@ -1149,7 +1179,7 @@ const Interpretation = (() => {
         lord: currentDasha.pratyantar.lord,
         period: lang === 'ml' ? 'ഈ മാസത്തെ ഫലം (പ്രത്യപഹാരം)' : 'This Month (Pratyantar Dasha)',
         theme: pratyantarEval.theme,
-        prediction: getPredictionText(pratyantarEval.score),
+        prediction: getPredictionText(currentDasha.pratyantar.lord, pratyantarEval.pData, pratyantarEval.score),
         icon: pratyantarEval.icon,
         score: pratyantarEval.score
       }
