@@ -922,21 +922,25 @@ const Interpretation = (() => {
     };
   }
 
-  function interpretChildren(chart, lang = 'en') {
+  function interpretChildren(chart, dashaTimeline, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord5 = VedicCore.getLordOf(5, lagna);
     const lord5Data = chart.planets[lord5];
     const jupiterData = chart.planets.Jupiter;
 
+    let text = lang === 'ml' ? 'സാധാരണ സന്താന ഭാഗ്യം' : 'Favorable; standard prospects';
     if (lord5Data.house === 6 || lord5Data.house === 8 || lord5Data.house === 12 || lord5Data.dignity === 'Debilitated') {
-      return lang === 'ml' ? 'ശ്രദ്ധാപൂർവ്വമായ ആസൂത്രണം ആവശ്യമാണ്; കാലതാമസം ഉണ്ടായേക്കാം' : 'Requires careful planning; possible delays';
+      text = lang === 'ml' ? 'ശ്രദ്ധാപൂർവ്വമായ ആസൂത്രണം ആവശ്യമാണ്; കാലതാമസം ഉണ്ടായേക്കാം' : 'Requires careful planning; possible delays';
     } else if (jupiterData.dignity === 'Exalted' || jupiterData.dignity === 'Own' || lord5Data.dignity === 'Exalted' || lord5Data.dignity === 'Own') {
-      return lang === 'ml' ? 'മികച്ച സന്താന ഭാഗ്യം' : 'Highly favorable prospects for children';
+      text = lang === 'ml' ? 'മികച്ച സന്താന ഭാഗ്യം' : 'Highly favorable prospects for children';
     }
-    return lang === 'ml' ? 'സാധാരണ സന്താന ഭാഗ്യം' : 'Favorable; standard prospects';
+    
+    const primaryPlanets = [lord5, 'Jupiter'];
+    const windows = findFavorablePeriods(dashaTimeline, primaryPlanets, [], 2, 3, lang);
+    return { text, windows };
   }
 
-  function interpretFinance(chart, lang = 'en') {
+  function interpretFinance(chart, dashaTimeline, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord2 = VedicCore.getLordOf(2, lagna);
     const lord11 = VedicCore.getLordOf(11, lagna);
@@ -959,7 +963,11 @@ const Interpretation = (() => {
       description = lang === 'ml' ? 'ചെലവുകൾ വരുമാനത്തിന് തുല്യമാകാം; വലിയ നിക്ഷേപങ്ങൾ ഒഴിവാക്കുക.' : 'Expenses may match income; avoid highly speculative investments.';
     }
     
-    return { title, description };
+    const primaryPlanets = [lord2, lord11];
+    const secondaryPlanets = ['Jupiter', 'Venus'];
+    const windows = findFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets, 2, 3, lang);
+    
+    return { title, description, windows };
   }
 
   function interpretTravel(chart, dashaTimeline, lang = 'en') {
@@ -1138,9 +1146,9 @@ const Interpretation = (() => {
   function generateLifePredictions(chart, dashaResult, dashaTimeline, lang = 'en') {
     return {
       family: interpretFamily(chart, lang),
-      finance: interpretFinance(chart, lang),
+      finance: interpretFinance(chart, dashaTimeline, lang),
       marriage: interpretMarriage(chart, dashaTimeline, lang),
-      children: interpretChildren(chart, lang),
+      children: interpretChildren(chart, dashaTimeline, lang),
       travel: interpretTravel(chart, dashaTimeline, lang),
       health: interpretHealthDetails(chart, lang)
     };

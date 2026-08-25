@@ -745,7 +745,29 @@ function JyothishamApp() {
             </div>
             <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
               <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{t('Children Prospects')}</p>
-              <p className="text-sm text-white font-medium">{t(cr.lifePredictions.children)}</p>
+              <p className="text-sm text-white font-medium mb-2">{t(cr.lifePredictions.children.text)}</p>
+              {cr.lifePredictions.children.windows && cr.lifePredictions.children.windows.length > 0 && (
+                 <div className="space-y-2 mt-3 pt-3 border-t border-slate-700/30">
+                   <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">{lang === 'ml' ? 'പ്രധാന അനുകൂല സമയങ്ങൾ' : 'Significant Favorable Periods'}</p>
+                   <div className="flex flex-col gap-2">
+                     {cr.lifePredictions.children.windows.map((w, i) => (
+                       <div key={i} className={`flex justify-between items-center p-2 rounded text-sm ${w.isPast ? 'bg-slate-900/30 border border-slate-700/10 opacity-60' : 'bg-slate-900/60 border border-slate-700/30'}`}>
+                         <span className="text-white font-mono text-xs flex items-center">
+                           {w.isPast && <span className="mr-2 text-[9px] uppercase tracking-wider text-slate-400 border border-slate-700 px-1 rounded">{t('Past')}</span>}
+                           {w.periodStr}
+                           <div className="group relative ml-2 cursor-help flex items-center">
+                             <Info size={12} className="text-slate-400/50 group-hover:text-slate-300 transition-colors" />
+                             <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-[200px] bg-slate-800 text-slate-200 text-[10px] p-2 rounded shadow-xl border border-slate-700 z-50 whitespace-normal text-center leading-tight pointer-events-none">
+                               {w.reason}
+                             </div>
+                           </div>
+                         </span>
+                         <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${w.probability === 'High' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{t(w.probability)}</span>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+              )}
             </div>
           </div>
 
@@ -766,6 +788,28 @@ function JyothishamApp() {
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Briefcase size={16} className="text-emerald-400" /> {t(cr.lifePredictions.finance.title)}</h3>
             <p className="pl-6 text-sm">{t(cr.lifePredictions.finance.description)}</p>
+            {cr.lifePredictions.finance.windows && cr.lifePredictions.finance.windows.length > 0 && (
+               <div className="pl-6 mt-3 space-y-2">
+                 <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">{lang === 'ml' ? 'പ്രധാന അനുകൂല സമയങ്ങൾ' : 'Significant Favorable Periods'}</p>
+                 <div className="flex flex-col gap-2">
+                   {cr.lifePredictions.finance.windows.map((w, i) => (
+                     <div key={i} className={`flex justify-between items-center p-2 rounded text-sm ${w.isPast ? 'bg-emerald-950/10 border border-emerald-900/20 opacity-60' : 'bg-emerald-950/30 border border-emerald-900/40'}`}>
+                       <span className="text-emerald-50 font-mono text-xs flex items-center">
+                         {w.isPast && <span className="mr-2 text-[9px] uppercase tracking-wider text-emerald-500/70 border border-emerald-500/30 px-1 rounded">{t('Past')}</span>}
+                         {w.periodStr}
+                         <div className="group relative ml-2 cursor-help flex items-center">
+                           <Info size={12} className="text-emerald-400/50 group-hover:text-emerald-300 transition-colors" />
+                           <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-[200px] bg-slate-800 text-slate-200 text-[10px] p-2 rounded shadow-xl border border-slate-700 z-50 whitespace-normal text-center leading-tight pointer-events-none">
+                             {w.reason}
+                           </div>
+                         </div>
+                       </span>
+                       <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${w.probability === 'High' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{t(w.probability)}</span>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+            )}
           </div>
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Activity size={16} className="text-blue-400" /> {t('Foreign Travel & Residence')}</h3>
