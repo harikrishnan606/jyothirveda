@@ -1095,6 +1095,67 @@ const Interpretation = (() => {
     };
   }
 
+  function generateCurrentTimePredictions(chart, currentDasha, lang = 'en') {
+    if (!currentDasha || !currentDasha.antar || !currentDasha.pratyantar) return null;
+
+    const evaluatePlanet = (planetName) => {
+      const pData = chart.planets[planetName];
+      if (!pData) return { score: 50, theme: 'Neutral' };
+      
+      let score = 50;
+      if (pData.dignity === 'Exalted' || pData.dignity === 'Own' || pData.dignity === 'Moolatrikona') score += 20;
+      else if (pData.dignity === 'Friend') score += 10;
+      else if (pData.dignity === 'Enemy') score -= 10;
+      else if (pData.dignity === 'Debilitated') score -= 20;
+
+      if ([1, 4, 7, 10, 5, 9].includes(pData.house)) score += 15;
+      if ([6, 8, 12].includes(pData.house)) score -= 20;
+
+      let theme = '';
+      let icon = 'Star';
+      
+      if (planetName === 'Sun') { theme = lang === 'ml' ? 'കരിയർ, അധികാരം, ആത്മവിശ്വാസം' : 'Career, Authority, Confidence'; icon = 'Sun'; }
+      if (planetName === 'Moon') { theme = lang === 'ml' ? 'മനസ്സ്, മാറ്റങ്ങൾ, കുടുംബം' : 'Mind, Changes, Family'; icon = 'Moon'; }
+      if (planetName === 'Mars') { theme = lang === 'ml' ? 'ഊർജ്ജം, ധൈര്യം, തർക്കങ്ങൾ' : 'Energy, Courage, Disputes'; icon = 'Flame'; }
+      if (planetName === 'Mercury') { theme = lang === 'ml' ? 'ബുദ്ധി, ആശയവിനിമയം, പഠനം' : 'Intellect, Communication, Learning'; icon = 'BookOpen'; }
+      if (planetName === 'Jupiter') { theme = lang === 'ml' ? 'ഭാഗ്യം, വിദ്യ, സാമ്പത്തികം' : 'Luck, Wisdom, Finances'; icon = 'Sparkles'; }
+      if (planetName === 'Venus') { theme = lang === 'ml' ? 'ബന്ധങ്ങൾ, സുഖസൗകര്യങ്ങൾ, കല' : 'Relationships, Comforts, Arts'; icon = 'Heart'; }
+      if (planetName === 'Saturn') { theme = lang === 'ml' ? 'കഠിനാധ്വാനം, കാലതാമസം, അച്ചടക്കം' : 'Hard Work, Delays, Discipline'; icon = 'Briefcase'; }
+      if (planetName === 'Rahu') { theme = lang === 'ml' ? 'അപ്രതീക്ഷിത മാറ്റങ്ങൾ, വിദേശയാത്ര' : 'Sudden Changes, Foreign Matters'; icon = 'Zap'; }
+      if (planetName === 'Ketu') { theme = lang === 'ml' ? 'ആത്മീയത, വിരക്തി, തടസ്സങ്ങൾ' : 'Spirituality, Detachment, Obstacles'; icon = 'Ban'; }
+
+      return { score, theme, icon };
+    };
+
+    const antarEval = evaluatePlanet(currentDasha.antar.lord);
+    const pratyantarEval = evaluatePlanet(currentDasha.pratyantar.lord);
+
+    const getPredictionText = (score) => {
+      if (score >= 70) return lang === 'ml' ? 'വളരെ അനുകൂലമായ സമയം. പുതിയ കാര്യങ്ങൾ തുടങ്ങാൻ ഉത്തമം.' : 'Highly favorable period. Great for starting new ventures and seeing growth.';
+      if (score >= 50) return lang === 'ml' ? 'സാധാരണ ഫലങ്ങൾ ലഭിക്കുന്ന സമയം. സ്ഥിരമായ പ്രയത്നം ആവശ്യമാണ്.' : 'Moderate period. Steady effort will yield results without major disruptions.';
+      return lang === 'ml' ? 'ചെറിയ തടസ്സങ്ങൾക്ക് സാധ്യത. സുപ്രധാന തീരുമാനങ്ങൾ എടുക്കുമ്പോൾ ശ്രദ്ധിക്കുക.' : 'Challenging period. Be cautious with major decisions and practice patience.';
+    };
+
+    return {
+      year: {
+        lord: currentDasha.antar.lord,
+        period: lang === 'ml' ? 'ഈ വർഷത്തെ ഫലം (അപഹാരം)' : 'This Year (Antar Dasha)',
+        theme: antarEval.theme,
+        prediction: getPredictionText(antarEval.score),
+        icon: antarEval.icon,
+        score: antarEval.score
+      },
+      month: {
+        lord: currentDasha.pratyantar.lord,
+        period: lang === 'ml' ? 'ഈ മാസത്തെ ഫലം (പ്രത്യപഹാരം)' : 'This Month (Pratyantar Dasha)',
+        theme: pratyantarEval.theme,
+        prediction: getPredictionText(pratyantarEval.score),
+        icon: pratyantarEval.icon,
+        score: pratyantarEval.score
+      }
+    };
+  }
+
   function generateLifePredictions(chart, dashaResult, dashaTimeline, lang = 'en') {
     return {
       family: interpretFamily(chart, lang),
@@ -1119,6 +1180,7 @@ const Interpretation = (() => {
     interpretHealthDetails,
     getPlanetScore,
     generateLifePredictions,
+    generateCurrentTimePredictions,
     PLANET_REMEDIES,
     LAGNA_TRAITS
   };
