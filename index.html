@@ -703,10 +703,13 @@ function JyothishamApp() {
       content: (
         <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
           {cr.lifePredictions.marriage.partnerTraits && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {cr.lifePredictions.marriage.partnerTraits.map((tag, i) => (
-                <span key={i} className="px-3 py-1 bg-rose-500/10 text-rose-300 border border-rose-500/20 rounded-full text-xs font-semibold tracking-wider flex items-center gap-1"><Heart size={12} /> {t(tag)}</span>
-              ))}
+            <div className="flex flex-col gap-2 mb-3">
+              <span className="text-xs text-slate-400 uppercase tracking-widest font-semibold">{lang === 'ml' ? 'പങ്കാളിയുടെ സ്വഭാവം:' : 'Spouse/Partner Nature:'}</span>
+              <div className="flex flex-wrap gap-2">
+                {cr.lifePredictions.marriage.partnerTraits.map((tag, i) => (
+                  <span key={i} className="px-3 py-1 bg-rose-500/10 text-rose-300 border border-rose-500/20 rounded-full text-xs font-semibold tracking-wider flex items-center gap-1"><Heart size={12} /> {t(tag)}</span>
+                ))}
+              </div>
             </div>
           )}
           <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Marriage & Partnerships')}</h3>
