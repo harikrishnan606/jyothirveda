@@ -791,8 +791,61 @@ const Interpretation = (() => {
     };
   }
 
+  function findUpcomingFavorablePeriods(dashaTimeline, favorablePlanets, count = 1) {
+    if (!dashaTimeline || typeof window === 'undefined' || !window.DashaSystem) return '';
+    
+    const now = new Date();
+    const parseDate = (dStr) => {
+      const parts = dStr.split('/');
+      if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      return new Date(dStr);
+    };
+
+    const nowTime = now.getTime();
+    let foundPeriods = [];
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const formatPeriod = (startStr, endStr) => {
+      const sParts = startStr.split('/');
+      const eParts = endStr.split('/');
+      const sMonth = monthNames[parseInt(sParts[1], 10) - 1];
+      const eMonth = monthNames[parseInt(eParts[1], 10) - 1];
+      return `${sMonth} ${sParts[2]} to ${eMonth} ${eParts[2]}`;
+    };
+
+    for (const maha of dashaTimeline) {
+      const mahaEnd = parseDate(maha.endDate.dateStr).getTime();
+      if (mahaEnd < nowTime) continue;
+
+      if (favorablePlanets.includes(maha.lord)) {
+        const periodStr = formatPeriod(maha.startDate.dateStr, maha.endDate.dateStr);
+        if (!foundPeriods.includes(periodStr)) foundPeriods.push(periodStr);
+        if (foundPeriods.length >= count) break;
+        continue;
+      }
+
+      const antars = window.DashaSystem.getAntarDasha(maha);
+      let continuousStart = null;
+      let continuousEnd = null;
+
+      for (const antar of antars) {
+        const antarEnd = parseDate(antar.endDate.dateStr).getTime();
+        if (antarEnd < nowTime) continue;
+
+        if (favorablePlanets.includes(antar.lord)) {
+          const periodStr = formatPeriod(antar.startDate.dateStr, antar.endDate.dateStr);
+          if (!foundPeriods.includes(periodStr)) foundPeriods.push(periodStr);
+          if (foundPeriods.length >= count) break;
+        }
+      }
+      if (foundPeriods.length >= count) break;
+    }
+
+    return foundPeriods.join(', ');
+  }
+
   // ─── Key Life Predictions (Marriage, Children, Travel) ────
-  function interpretMarriage(chart, lang = 'en') {
+  function interpretMarriage(chart, dashaTimeline, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord7 = VedicCore.getLordOf(7, lagna);
     const lord7Data = chart.planets[lord7];
@@ -805,6 +858,15 @@ const Interpretation = (() => {
       timing = lang === 'ml' ? 'കാലതാമസമോ തടസ്സങ്ങളോ ഉണ്ടാകാം; ക്ഷമ ആവശ്യമാണ്' : 'Possible delays or obstacles; patience required';
     } else if (lord7Data.house === 1 || lord7Data.house === 7 || venusData.dignity === 'Exalted') {
       timing = lang === 'ml' ? 'നേരത്തെയുള്ള അല്ലെങ്കിൽ കൃത്യസമയത്തുള്ള വിവാഹം' : 'Early or timely marriage indicated';
+    }
+
+    const favorablePlanets = [lord7, 'Venus'];
+    if (chart.planets.Jupiter.dignity === 'Exalted' || chart.planets.Jupiter.dignity === 'Own' || chart.planets.Jupiter.dignity === 'Friendly') {
+      favorablePlanets.push('Jupiter');
+    }
+    const upcoming = findUpcomingFavorablePeriods(dashaTimeline, favorablePlanets, 1);
+    if (upcoming) {
+      timing += lang === 'ml' ? ` (പ്രതീക്ഷിക്കുന്ന സമയം: ${upcoming})` : ` (Expected: ${upcoming})`;
     }
 
     let type = lang === 'ml' ? 'നിശ്ചയിച്ചുറപ്പിച്ച വിവാഹം' : 'Arranged/Traditional';
@@ -836,7 +898,17 @@ const Interpretation = (() => {
       partnerTraits = lang === 'ml' ? ['പിന്തുണയ്ക്കുന്ന'] : ['Supportive'];
     }
 
-    return { timing, type, partnerTraits };
+    const house7 = chart.houses[7];
+
+    return { 
+      timing, 
+      type, 
+      partnerTraits,
+      seventhLord: lord7,
+      seventhLordDignity: lord7Data.dignity,
+      occupants: house7.occupants,
+      aspectedBy: house7.aspectedBy
+    };
   }
 
   function interpretChildren(chart, lang = 'en') {
@@ -879,19 +951,29 @@ const Interpretation = (() => {
     return { title, description };
   }
 
-  function interpretTravel(chart, lang = 'en') {
+  function interpretTravel(chart, dashaTimeline, lang = 'en') {
     const lagna = chart.lagnaRasiIndex;
     const lord9 = VedicCore.getLordOf(9, lagna);
     const lord12 = VedicCore.getLordOf(12, lagna);
     const lord9Data = chart.planets[lord9];
     const lord12Data = chart.planets[lord12];
     
+    let travelStr = '';
     if (lord9Data.house === 9 || lord9Data.house === 12 || lord12Data.house === 9 || lord12Data.house === 12) {
-      return lang === 'ml' ? 'വിദേശ യാത്രയ്ക്കോ വിദേശത്ത് സ്ഥിരതാമസമാക്കാനോ ഉള്ള ശക്തമായ സാധ്യതകൾ' : 'Strong indications for foreign travel or settlement';
+      travelStr = lang === 'ml' ? 'വിദേശ യാത്രയ്ക്കോ വിദേശത്ത് സ്ഥിരതാമസമാക്കാനോ ഉള്ള ശക്തമായ സാധ്യതകൾ' : 'Strong indications for foreign travel or settlement';
     } else if (lord9Data.dignity === 'Exalted' || lord12Data.dignity === 'Exalted') {
-      return lang === 'ml' ? 'ദൂരയാത്രകൾക്ക് വളരെ അനുകൂലമായ സമയം' : 'Highly favorable for long-distance travel';
+      travelStr = lang === 'ml' ? 'ദൂരയാത്രകൾക്ക് വളരെ അനുകൂലമായ സമയം' : 'Highly favorable for long-distance travel';
+    } else {
+      travelStr = lang === 'ml' ? 'ഗ്രഹങ്ങളുടെ നിലവിലെ ദശാകാലം അടിസ്ഥാനമാക്കിയുള്ള സാധാരണ യാത്രാ സാധ്യതകൾ' : 'Moderate travel prospects based on current planetary periods';
     }
-    return lang === 'ml' ? 'ഗ്രഹങ്ങളുടെ നിലവിലെ ദശാകാലം അടിസ്ഥാനമാക്കിയുള്ള സാധാരണ യാത്രാ സാധ്യതകൾ' : 'Moderate travel prospects based on current planetary periods';
+
+    const favorablePlanets = [lord9, lord12, 'Rahu', 'Moon'];
+    const upcoming = findUpcomingFavorablePeriods(dashaTimeline, favorablePlanets, 1);
+    if (upcoming) {
+      travelStr += lang === 'ml' ? ` (അനുകൂല സമയം: ${upcoming})` : ` (Favorable in: ${upcoming})`;
+    }
+    
+    return travelStr;
   }
 
   // ─── Detailed Health Cautions ─────────────────────────────
@@ -1045,13 +1127,13 @@ const Interpretation = (() => {
     };
   }
 
-  function generateLifePredictions(chart, dashaResult, lang = 'en') {
+  function generateLifePredictions(chart, dashaResult, dashaTimeline, lang = 'en') {
     return {
       family: interpretFamily(chart, lang),
       finance: interpretFinance(chart, lang),
-      marriage: interpretMarriage(chart, lang),
+      marriage: interpretMarriage(chart, dashaTimeline, lang),
       children: interpretChildren(chart, lang),
-      travel: interpretTravel(chart, lang),
+      travel: interpretTravel(chart, dashaTimeline, lang),
       health: interpretHealthDetails(chart, lang)
     };
   }

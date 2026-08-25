@@ -110,7 +110,7 @@ function computeChart(formData, lang = 'en') {
     const remedies = Interpretation.interpretRemedies(chart, yogaDoshaResults, lang);
     const insights = Interpretation.generateInsights(chart, currentDasha, ashtakavargaResult, yogaDoshaResults, lang);
     const coreData = Interpretation.generateCoreData(chart, panchanga, currentDasha, lang);
-    const lifePredictions = Interpretation.generateLifePredictions(chart, currentDasha, lang);
+    const lifePredictions = Interpretation.generateLifePredictions(chart, currentDasha, dashaTimeline, lang);
 
     return {
       positions, chart, navamsaChart, rasiGrid, navamsaGrid,
@@ -697,8 +697,47 @@ function JyothishamApp() {
       )
     },
     {
+      id: 'relationship',
+      title: t('Relationship & Marriage'),
+      iconElement: <Heart size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          {cr.lifePredictions.marriage.partnerTraits && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {cr.lifePredictions.marriage.partnerTraits.map((tag, i) => (
+                <span key={i} className="px-3 py-1 bg-rose-500/10 text-rose-300 border border-rose-500/20 rounded-full text-xs font-semibold tracking-wider flex items-center gap-1"><Heart size={12} /> {t(tag)}</span>
+              ))}
+            </div>
+          )}
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Marriage & Partnerships')}</h3>
+          
+          <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg mb-4">
+            <p className="text-xs text-rose-400 uppercase tracking-widest font-semibold mb-1">{t('Expected Timing')}</p>
+            <p className="text-sm text-white font-medium">{t(cr.lifePredictions.marriage.timing)}</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{t('Type of Marriage')}</p>
+              <p className="text-sm text-white font-medium">{t(cr.lifePredictions.marriage.type)}</p>
+            </div>
+            <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{t('Children Prospects')}</p>
+              <p className="text-sm text-white font-medium">{t(cr.lifePredictions.children)}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 text-sm space-y-1 p-3 bg-slate-900/30 rounded-lg border border-slate-700/30">
+            <p><strong className="text-slate-400">{t('7th Lord')}:</strong> {t(cr.lifePredictions.marriage.seventhLord)} ({t(cr.lifePredictions.marriage.seventhLordDignity)})</p>
+            {cr.lifePredictions.marriage.occupants.length > 0 && <p><strong className="text-slate-400">{t('Occupants')}:</strong> {cr.lifePredictions.marriage.occupants.map(o => t(o)).join(', ')}</p>}
+            {cr.lifePredictions.marriage.aspectedBy && cr.lifePredictions.marriage.aspectedBy.length > 0 && <p><strong className="text-slate-400">{lang === 'ml' ? '7-ാം ഭാവ ദൃഷ്ടി' : 'Aspected by'}:</strong> {cr.lifePredictions.marriage.aspectedBy.map(p => t(p)).join(', ')}</p>}
+          </div>
+        </div>
+      )
+    },
+    {
       id: 'life',
-      title: t('Life Predictions'),
+      title: t('Other Life Predictions'),
       iconElement: <TrendingUp size={20} />,
       content: (
         <div className="space-y-6 text-slate-300 leading-relaxed font-sans">
@@ -709,18 +748,6 @@ function JyothishamApp() {
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Activity size={16} className="text-blue-400" /> {t('Foreign Travel & Residence')}</h3>
             <p className="pl-6 text-sm">{t(cr.lifePredictions.travel)}</p>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Heart size={16} className="text-rose-400" /> {t('Marriage')} - {t(cr.lifePredictions.marriage.timing)}</h3>
-            <p className="pl-6 text-sm">{t(cr.lifePredictions.marriage.type)}</p>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><User size={16} className="text-indigo-400" /> {t('Partner')}</h3>
-            <p className="pl-6 text-sm">{cr.lifePredictions.marriage.partnerTraits.map(o => t(o)).join(', ')}</p>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><User size={16} className="text-amber-400" /> {t('Children')}</h3>
-            <p className="pl-6 text-sm">{t(cr.lifePredictions.children)}</p>
           </div>
         </div>
       )
