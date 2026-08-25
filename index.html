@@ -713,7 +713,20 @@ function JyothishamApp() {
           
           <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg mb-4">
             <p className="text-xs text-rose-400 uppercase tracking-widest font-semibold mb-1">{t('Expected Timing')}</p>
-            <p className="text-sm text-white font-medium">{t(cr.lifePredictions.marriage.timing)}</p>
+            <p className="text-sm text-white font-medium mb-2">{t(cr.lifePredictions.marriage.timing)}</p>
+            {cr.lifePredictions.marriage.windows && cr.lifePredictions.marriage.windows.length > 0 && (
+               <div className="space-y-2 mt-3 pt-3 border-t border-rose-500/20">
+                 <p className="text-[10px] text-rose-400/80 uppercase tracking-widest font-semibold">{t('Favorable Windows')}</p>
+                 <div className="flex flex-col gap-2">
+                   {cr.lifePredictions.marriage.windows.map((w, i) => (
+                     <div key={i} className="flex justify-between items-center bg-rose-950/30 border border-rose-500/10 p-2 rounded text-sm">
+                       <span className="text-rose-100 font-mono text-xs">{w.periodStr}</span>
+                       <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${w.probability === 'High' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{t(w.probability)}</span>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -747,7 +760,20 @@ function JyothishamApp() {
           </div>
           <div>
             <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1"><Activity size={16} className="text-blue-400" /> {t('Foreign Travel & Residence')}</h3>
-            <p className="pl-6 text-sm">{t(cr.lifePredictions.travel)}</p>
+            <p className="pl-6 text-sm">{t(cr.lifePredictions.travel.text)}</p>
+            {cr.lifePredictions.travel.windows && cr.lifePredictions.travel.windows.length > 0 && (
+               <div className="pl-6 mt-3 space-y-2">
+                 <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">{t('Favorable Windows')}</p>
+                 <div className="flex flex-col gap-2">
+                   {cr.lifePredictions.travel.windows.map((w, i) => (
+                     <div key={i} className="flex justify-between items-center bg-slate-900/50 border border-slate-700/30 p-2 rounded text-sm">
+                       <span className="text-white font-mono text-xs">{w.periodStr}</span>
+                       <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${w.probability === 'High' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{t(w.probability)}</span>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+            )}
           </div>
         </div>
       )

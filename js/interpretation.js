@@ -791,8 +791,8 @@ const Interpretation = (() => {
     };
   }
 
-  function findUpcomingFavorablePeriods(dashaTimeline, favorablePlanets, count = 1) {
-    if (!dashaTimeline || typeof window === 'undefined' || !window.DashaSystem) return '';
+  function findUpcomingFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets = [], count = 3) {
+    if (!dashaTimeline || typeof window === 'undefined' || !window.DashaSystem) return [];
     
     const now = new Date();
     const parseDate = (dStr) => {
@@ -817,31 +817,40 @@ const Interpretation = (() => {
       const mahaEnd = parseDate(maha.endDate.dateStr).getTime();
       if (mahaEnd < nowTime) continue;
 
-      if (favorablePlanets.includes(maha.lord)) {
+      let mahaProb = null;
+      if (primaryPlanets.includes(maha.lord)) mahaProb = 'High';
+      else if (secondaryPlanets.includes(maha.lord)) mahaProb = 'Medium';
+
+      if (mahaProb === 'High') {
         const periodStr = formatPeriod(maha.startDate.dateStr, maha.endDate.dateStr);
-        if (!foundPeriods.includes(periodStr)) foundPeriods.push(periodStr);
+        if (!foundPeriods.find(p => p.periodStr === periodStr)) {
+          foundPeriods.push({ periodStr, probability: mahaProb });
+        }
         if (foundPeriods.length >= count) break;
         continue;
       }
 
       const antars = window.DashaSystem.getAntarDasha(maha);
-      let continuousStart = null;
-      let continuousEnd = null;
-
       for (const antar of antars) {
         const antarEnd = parseDate(antar.endDate.dateStr).getTime();
         if (antarEnd < nowTime) continue;
 
-        if (favorablePlanets.includes(antar.lord)) {
+        let antarProb = null;
+        if (primaryPlanets.includes(antar.lord)) antarProb = mahaProb === 'Medium' ? 'High' : 'Medium';
+        else if (secondaryPlanets.includes(antar.lord)) antarProb = 'Low';
+
+        if (antarProb && antarProb !== 'Low') {
           const periodStr = formatPeriod(antar.startDate.dateStr, antar.endDate.dateStr);
-          if (!foundPeriods.includes(periodStr)) foundPeriods.push(periodStr);
+          if (!foundPeriods.find(p => p.periodStr === periodStr)) {
+            foundPeriods.push({ periodStr, probability: antarProb });
+          }
           if (foundPeriods.length >= count) break;
         }
       }
       if (foundPeriods.length >= count) break;
     }
 
-    return foundPeriods.join(', ');
+    return foundPeriods;
   }
 
   // ─── Key Life Predictions (Marriage, Children, Travel) ────
@@ -860,14 +869,12 @@ const Interpretation = (() => {
       timing = lang === 'ml' ? 'നേരത്തെയുള്ള അല്ലെങ്കിൽ കൃത്യസമയത്തുള്ള വിവാഹം' : 'Early or timely marriage indicated';
     }
 
-    const favorablePlanets = [lord7, 'Venus'];
+    const primaryPlanets = [lord7, 'Venus'];
+    const secondaryPlanets = [];
     if (chart.planets.Jupiter.dignity === 'Exalted' || chart.planets.Jupiter.dignity === 'Own' || chart.planets.Jupiter.dignity === 'Friendly') {
-      favorablePlanets.push('Jupiter');
+      secondaryPlanets.push('Jupiter');
     }
-    const upcoming = findUpcomingFavorablePeriods(dashaTimeline, favorablePlanets, 1);
-    if (upcoming) {
-      timing += lang === 'ml' ? ` (പ്രതീക്ഷിക്കുന്ന സമയം: ${upcoming})` : ` (Expected: ${upcoming})`;
-    }
+    const upcomingWindows = findUpcomingFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets, 3);
 
     let type = lang === 'ml' ? 'നിശ്ചയിച്ചുറപ്പിച്ച വിവാഹം' : 'Arranged/Traditional';
     // 5th lord (romance) connected to 7th lord (marriage)
@@ -902,6 +909,7 @@ const Interpretation = (() => {
 
     return { 
       timing, 
+      windows: upcomingWindows,
       type, 
       partnerTraits,
       seventhLord: lord7,
@@ -967,13 +975,10 @@ const Interpretation = (() => {
       travelStr = lang === 'ml' ? 'ഗ്രഹങ്ങളുടെ നിലവിലെ ദശാകാലം അടിസ്ഥാനമാക്കിയുള്ള സാധാരണ യാത്രാ സാധ്യതകൾ' : 'Moderate travel prospects based on current planetary periods';
     }
 
-    const favorablePlanets = [lord9, lord12, 'Rahu', 'Moon'];
-    const upcoming = findUpcomingFavorablePeriods(dashaTimeline, favorablePlanets, 1);
-    if (upcoming) {
-      travelStr += lang === 'ml' ? ` (അനുകൂല സമയം: ${upcoming})` : ` (Favorable in: ${upcoming})`;
-    }
+    const primaryPlanets = [lord9, lord12, 'Rahu', 'Moon'];
+    const upcomingWindows = findUpcomingFavorablePeriods(dashaTimeline, primaryPlanets, [], 3);
     
-    return travelStr;
+    return { text: travelStr, windows: upcomingWindows };
   }
 
   // ─── Detailed Health Cautions ─────────────────────────────
