@@ -712,15 +712,18 @@ function JyothishamApp() {
           <h3 className="text-xl font-serif text-amber-400 mb-2">{t('Marriage & Partnerships')}</h3>
           
           <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg mb-4">
-            <p className="text-xs text-rose-400 uppercase tracking-widest font-semibold mb-1">{t('Expected Timing')}</p>
+            <p className="text-xs text-rose-400 uppercase tracking-widest font-semibold mb-1">{lang === 'ml' ? 'പൊതുവായ സൂചനകൾ' : 'General Indications'}</p>
             <p className="text-sm text-white font-medium mb-2">{t(cr.lifePredictions.marriage.timing)}</p>
             {cr.lifePredictions.marriage.windows && cr.lifePredictions.marriage.windows.length > 0 && (
                <div className="space-y-2 mt-3 pt-3 border-t border-rose-500/20">
-                 <p className="text-[10px] text-rose-400/80 uppercase tracking-widest font-semibold">{t('Favorable Windows')}</p>
+                 <p className="text-[10px] text-rose-400/80 uppercase tracking-widest font-semibold">{lang === 'ml' ? 'പ്രധാന അനുകൂല സമയങ്ങൾ (വിവാഹത്തിനോ ബന്ധങ്ങൾക്കോ)' : 'Significant Favorable Periods (For Marriage/Partnership)'}</p>
                  <div className="flex flex-col gap-2">
                    {cr.lifePredictions.marriage.windows.map((w, i) => (
-                     <div key={i} className="flex justify-between items-center bg-rose-950/30 border border-rose-500/10 p-2 rounded text-sm">
-                       <span className="text-rose-100 font-mono text-xs">{w.periodStr}</span>
+                     <div key={i} className={`flex justify-between items-center p-2 rounded text-sm ${w.isPast ? 'bg-rose-950/10 border border-rose-500/10 opacity-60' : 'bg-rose-950/30 border border-rose-500/20'}`}>
+                       <span className="text-rose-100 font-mono text-xs">
+                         {w.isPast && <span className="mr-2 text-[9px] uppercase tracking-wider text-rose-500/70 border border-rose-500/20 px-1 rounded">{t('Past')}</span>}
+                         {w.periodStr}
+                       </span>
                        <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${w.probability === 'High' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{t(w.probability)}</span>
                      </div>
                    ))}
@@ -766,8 +769,11 @@ function JyothishamApp() {
                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">{t('Favorable Windows')}</p>
                  <div className="flex flex-col gap-2">
                    {cr.lifePredictions.travel.windows.map((w, i) => (
-                     <div key={i} className="flex justify-between items-center bg-slate-900/50 border border-slate-700/30 p-2 rounded text-sm">
-                       <span className="text-white font-mono text-xs">{w.periodStr}</span>
+                     <div key={i} className={`flex justify-between items-center p-2 rounded text-sm ${w.isPast ? 'bg-slate-900/30 border border-slate-700/10 opacity-60' : 'bg-slate-900/60 border border-slate-700/30'}`}>
+                       <span className="text-white font-mono text-xs">
+                         {w.isPast && <span className="mr-2 text-[9px] uppercase tracking-wider text-slate-400 border border-slate-700 px-1 rounded">{t('Past')}</span>}
+                         {w.periodStr}
+                       </span>
                        <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${w.probability === 'High' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{t(w.probability)}</span>
                      </div>
                    ))}

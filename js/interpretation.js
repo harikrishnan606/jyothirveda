@@ -791,7 +791,7 @@ const Interpretation = (() => {
     };
   }
 
-  function findUpcomingFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets = [], count = 3) {
+  function findFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets = [], pastCount = 2, futureCount = 3) {
     if (!dashaTimeline || typeof window === 'undefined' || !window.DashaSystem) return [];
     
     const now = new Date();
@@ -802,7 +802,7 @@ const Interpretation = (() => {
     };
 
     const nowTime = now.getTime();
-    let foundPeriods = [];
+    let allPeriods = [];
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const formatPeriod = (startStr, endStr) => {
@@ -815,7 +815,7 @@ const Interpretation = (() => {
 
     for (const maha of dashaTimeline) {
       const mahaEnd = parseDate(maha.endDate.dateStr).getTime();
-      if (mahaEnd < nowTime) continue;
+      const isMahaPast = mahaEnd < nowTime;
 
       let mahaProb = null;
       if (primaryPlanets.includes(maha.lord)) mahaProb = 'High';
@@ -823,17 +823,16 @@ const Interpretation = (() => {
 
       if (mahaProb === 'High') {
         const periodStr = formatPeriod(maha.startDate.dateStr, maha.endDate.dateStr);
-        if (!foundPeriods.find(p => p.periodStr === periodStr)) {
-          foundPeriods.push({ periodStr, probability: mahaProb });
+        if (!allPeriods.find(p => p.periodStr === periodStr)) {
+          allPeriods.push({ periodStr, probability: mahaProb, isPast: isMahaPast });
         }
-        if (foundPeriods.length >= count) break;
         continue;
       }
 
       const antars = window.DashaSystem.getAntarDasha(maha);
       for (const antar of antars) {
         const antarEnd = parseDate(antar.endDate.dateStr).getTime();
-        if (antarEnd < nowTime) continue;
+        const isAntarPast = antarEnd < nowTime;
 
         let antarProb = null;
         if (primaryPlanets.includes(antar.lord)) antarProb = mahaProb === 'Medium' ? 'High' : 'Medium';
@@ -841,16 +840,17 @@ const Interpretation = (() => {
 
         if (antarProb && antarProb !== 'Low') {
           const periodStr = formatPeriod(antar.startDate.dateStr, antar.endDate.dateStr);
-          if (!foundPeriods.find(p => p.periodStr === periodStr)) {
-            foundPeriods.push({ periodStr, probability: antarProb });
+          if (!allPeriods.find(p => p.periodStr === periodStr)) {
+            allPeriods.push({ periodStr, probability: antarProb, isPast: isAntarPast });
           }
-          if (foundPeriods.length >= count) break;
         }
       }
-      if (foundPeriods.length >= count) break;
     }
 
-    return foundPeriods;
+    const past = allPeriods.filter(p => p.isPast).slice(-pastCount);
+    const future = allPeriods.filter(p => !p.isPast).slice(0, futureCount);
+
+    return [...past, ...future];
   }
 
   // ─── Key Life Predictions (Marriage, Children, Travel) ────
@@ -862,11 +862,11 @@ const Interpretation = (() => {
     const lord5Data = chart.planets[lord5];
     const venusData = chart.planets.Venus;
 
-    let timing = lang === 'ml' ? 'സാധാരണ സമയം' : 'Normal (Expected timeframe)';
+    let timing = lang === 'ml' ? 'സാധാരണ സൂചനകൾ' : 'Standard indications based on chart';
     if (lord7Data.house === 6 || lord7Data.house === 8 || lord7Data.house === 12 || lord7Data.dignity === 'Debilitated' || chart.planets.Saturn.aspects.includes(7)) {
-      timing = lang === 'ml' ? 'കാലതാമസമോ തടസ്സങ്ങളോ ഉണ്ടാകാം; ക്ഷമ ആവശ്യമാണ്' : 'Possible delays or obstacles; patience required';
+      timing = lang === 'ml' ? 'വിവാഹത്തിന് കാലതാമസമോ തടസ്സങ്ങളോ ഉണ്ടാകാം (അവിവാഹിതനാണെങ്കിൽ)' : 'Possible delays or obstacles (if unmarried); requires patience in relationships';
     } else if (lord7Data.house === 1 || lord7Data.house === 7 || venusData.dignity === 'Exalted') {
-      timing = lang === 'ml' ? 'നേരത്തെയുള്ള അല്ലെങ്കിൽ കൃത്യസമയത്തുള്ള വിവാഹം' : 'Early or timely marriage indicated';
+      timing = lang === 'ml' ? 'നേരത്തെയുള്ള അല്ലെങ്കിൽ കൃത്യസമയത്തുള്ള വിവാഹത്തിന് ശക്തമായ സാധ്യതകൾ' : 'Strong indications for early or timely marriage';
     }
 
     const primaryPlanets = [lord7, 'Venus'];
@@ -874,7 +874,7 @@ const Interpretation = (() => {
     if (chart.planets.Jupiter.dignity === 'Exalted' || chart.planets.Jupiter.dignity === 'Own' || chart.planets.Jupiter.dignity === 'Friendly') {
       secondaryPlanets.push('Jupiter');
     }
-    const upcomingWindows = findUpcomingFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets, 3);
+    const upcomingWindows = findFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets, 2, 3);
 
     let type = lang === 'ml' ? 'നിശ്ചയിച്ചുറപ്പിച്ച വിവാഹം' : 'Arranged/Traditional';
     // 5th lord (romance) connected to 7th lord (marriage)
@@ -976,7 +976,7 @@ const Interpretation = (() => {
     }
 
     const primaryPlanets = [lord9, lord12, 'Rahu', 'Moon'];
-    const upcomingWindows = findUpcomingFavorablePeriods(dashaTimeline, primaryPlanets, [], 3);
+    const upcomingWindows = findFavorablePeriods(dashaTimeline, primaryPlanets, [], 2, 3);
     
     return { text: travelStr, windows: upcomingWindows };
   }
