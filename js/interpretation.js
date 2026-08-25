@@ -798,7 +798,7 @@ const Interpretation = (() => {
       type = lang === 'ml' ? 'പ്രണയവിവാഹം / പ്രണയത്തോടെ നിശ്ചയിച്ച വിവാഹം' : 'Love or Love-cum-arranged';
     }
 
-    // Partner traits based on 7th lord planet
+    // Partner traits based on 7th lord and occupants
     const traitsMap = {
       Sun: lang === 'ml' ? ['അധികാരമുള്ള', 'ആത്മവിശ്വാസമുള്ള', 'നേതൃത്വഗുണമുള്ള'] : ['Authoritative', 'Confident', 'Leadership'],
       Moon: lang === 'ml' ? ['പരിപാലിക്കുന്ന', 'വൈകാരികതയുള്ള', 'കരുതലുള്ള'] : ['Nurturing', 'Emotional', 'Caring'],
@@ -806,9 +806,20 @@ const Interpretation = (() => {
       Mercury: lang === 'ml' ? ['ബുദ്ധിമാനായ', 'സംസാരപ്രിയനായ', 'ചെറുപ്പമുള്ള'] : ['Intellectual', 'Communicative', 'Youthful'],
       Jupiter: lang === 'ml' ? ['ഉന്നത വിദ്യാഭ്യാസമുള്ള', 'ആത്മീയതയുള്ള', 'മൂല്യങ്ങളുള്ള'] : ['Highly Educated', 'Spiritual', 'Values'],
       Venus: lang === 'ml' ? ['ആകർഷകമായ', 'കലാപരമായ', 'സന്തുലിതമായ'] : ['Attractive', 'Artistic', 'Harmonious'],
-      Saturn: lang === 'ml' ? ['പക്വതയുള്ള', 'അച്ചടക്കമുള്ള', 'യാഥാർത്ഥ്യബോധമുള്ള'] : ['Mature', 'Disciplined', 'Grounded']
+      Saturn: lang === 'ml' ? ['പക്വതയുള്ള', 'അച്ചടക്കമുള്ള', 'യാഥാർത്ഥ്യബോധമുള്ള'] : ['Mature', 'Disciplined', 'Grounded'],
+      Rahu: lang === 'ml' ? ['അസാധാരണമായ', 'അന്യനാട്ടുകാരനായ', 'ലക്ഷ്യബോധമുള്ള'] : ['Unconventional', 'Foreign', 'Ambitious'],
+      Ketu: lang === 'ml' ? ['ആത്മീയതയുള്ള', 'അന്തർമുഖനായ', 'സങ്കീർണ്ണമായ'] : ['Spiritual', 'Introverted', 'Mysterious']
     };
-    let partnerTraits = traitsMap[lord7] || (lang === 'ml' ? ['പിന്തുണയ്ക്കുന്ന'] : ['Supportive']);
+    
+    let traitSet = new Set(traitsMap[lord7] || []);
+    chart.houses[7].occupants.forEach(occ => {
+      if (traitsMap[occ]) traitsMap[occ].forEach(t => traitSet.add(t));
+    });
+    
+    let partnerTraits = Array.from(traitSet);
+    if (partnerTraits.length === 0) {
+      partnerTraits = lang === 'ml' ? ['പിന്തുണയ്ക്കുന്ന'] : ['Supportive'];
+    }
 
     return { timing, type, partnerTraits };
   }
@@ -893,13 +904,28 @@ const Interpretation = (() => {
     const vulnerabilities = [];
     vulnerabilities.push(bodyMap[house6Rasi]);
     
+    const healthVulnMap = {
+      Sun: { text: lang === 'ml' ? 'ഹൃദയം/കണ്ണ്' : 'Heart/Eyes', icon: 'Heart' },
+      Moon: { text: lang === 'ml' ? 'മാനസിക സമ്മർദ്ദം' : 'Mental Stress', icon: 'Brain' },
+      Mars: { text: lang === 'ml' ? 'ശരീരത്തിലെ ചൂട്/വീക്കം' : 'Inflammation/Heat', icon: 'Flame' },
+      Mercury: { text: lang === 'ml' ? 'നാഡീവ്യൂഹം' : 'Nervous System', icon: 'Brain' },
+      Jupiter: { text: lang === 'ml' ? 'കരളിലെ കൊഴുപ്പ്/ദഹനം' : 'Liver/Digestion', icon: 'Activity' },
+      Venus: { text: lang === 'ml' ? 'പ്രമേഹം/ചർമ്മം' : 'Sugar/Skin', icon: 'Sparkles' },
+      Saturn: { text: lang === 'ml' ? 'വിട്ടുമാറാത്ത രോഗങ്ങൾ/അസ്ഥികൾ' : 'Chronic/Bones', icon: 'Activity' },
+      Rahu: { text: lang === 'ml' ? 'കണ്ടുപിടിക്കാൻ ബുദ്ധിമുട്ടുള്ള അസുഖങ്ങൾ' : 'Unusual/Undiagnosed', icon: 'Activity' },
+      Ketu: { text: lang === 'ml' ? 'വൈറസ്/പകർച്ചവ്യാധി' : 'Viral/Infections', icon: 'Activity' }
+    };
+    
     // Add specific planetary vulnerabilities based on 6th lord
     const lord6 = VedicCore.getLordOf(6, lagna);
-    if (lord6 === 'Mars') vulnerabilities.push({ text: lang === 'ml' ? 'ശരീരത്തിലെ ചൂട്/വീക്കം' : 'Inflammation/Heat', icon: 'Flame' });
-    if (lord6 === 'Mercury') vulnerabilities.push({ text: lang === 'ml' ? 'നാഡീവ്യൂഹം' : 'Nervous System', icon: 'Brain' });
-    if (lord6 === 'Venus') vulnerabilities.push({ text: lang === 'ml' ? 'പ്രമേഹം/ചർമ്മം' : 'Sugar/Skin', icon: 'Sparkles' });
-    if (lord6 === 'Saturn') vulnerabilities.push({ text: lang === 'ml' ? 'വിട്ടുമാറാത്ത രോഗങ്ങൾ/അസ്ഥികൾ' : 'Chronic/Bones', icon: 'Activity' });
-    if (lord6 === 'Moon') vulnerabilities.push({ text: lang === 'ml' ? 'മാനസിക സമ്മർദ്ദം' : 'Mental Stress', icon: 'Brain' });
+    if (healthVulnMap[lord6]) vulnerabilities.push(healthVulnMap[lord6]);
+    
+    // Check 6th house occupants
+    chart.houses[6].occupants.forEach(occ => {
+      if (healthVulnMap[occ] && !vulnerabilities.some(v => v.text === healthVulnMap[occ].text)) {
+        vulnerabilities.push(healthVulnMap[occ]);
+      }
+    });
     
     // Behavioral cautions based on Moon (mind) and Lagna (body)
     const behavioral = [];
