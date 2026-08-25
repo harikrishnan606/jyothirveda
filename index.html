@@ -346,6 +346,81 @@ const DASHA_THEMES = {
   Ketu:    { en: 'Best for: Spiritual retreats, detachment, introspection, and deep healing.', ml: 'ഏറ്റവും അനുയോജ്യം: ആത്മീയ കാര്യങ്ങൾ, ഏകാന്തത, ആത്മപരിശോധന.' }
 };
 
+const LifeGlanceTimeline = ({ dashaTimeline, currentDasha, chart, ashtakavargaResult, lang }) => {
+  const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key, lang) : key;
+  const events = React.useMemo(() => {
+    return Interpretation.generateMahaDashaSummary(dashaTimeline, chart, ashtakavargaResult, currentDasha, lang);
+  }, [dashaTimeline, chart, ashtakavargaResult, currentDasha, lang]);
+
+  if (!events || events.length === 0) return null;
+
+  const planetColors = {
+    Sun: 'bg-orange-500/70', Moon: 'bg-slate-400/60', Mars: 'bg-red-600/70', Mercury: 'bg-emerald-500/70',
+    Jupiter: 'bg-amber-500/70', Venus: 'bg-green-500/70', Saturn: 'bg-indigo-500/70', Rahu: 'bg-slate-600/70', Ketu: 'bg-purple-700/70'
+  };
+  const pointerColors = {
+    Sun: 'border-l-orange-500', Moon: 'border-l-slate-400', Mars: 'border-l-red-600', Mercury: 'border-l-emerald-500',
+    Jupiter: 'border-l-amber-500', Venus: 'border-l-green-500', Saturn: 'border-l-indigo-500', Rahu: 'border-l-slate-600', Ketu: 'border-l-purple-700'
+  };
+
+  return (
+    <div className="space-y-3 text-slate-300 leading-relaxed font-sans mb-6">
+      <h3 className="text-xl font-serif text-amber-400">{t('Life at a Glance')}</h3>
+      <p className="text-xs text-slate-500 uppercase tracking-widest">{lang === 'ml' ? 'ജീവിതകാലം ഒറ്റനോട്ടത്തിൽ' : 'Your life periods at a glance'}</p>
+      <div className="flex flex-col rounded-xl overflow-hidden border border-slate-700/40 bg-slate-900/50">
+        {events.map((e, i) => {
+          if (e.isGrouped) {
+            return (
+              <div key={i} className="flex items-stretch min-h-[2.5rem]">
+                <div className="w-4 sm:w-5 flex-shrink-0 bg-slate-700/40 rounded-bl-xl"></div>
+                <div className="py-2 pl-4 sm:pl-5 flex items-center text-slate-600 text-xs sm:text-sm border-t border-slate-800/60">
+                  {e.label}
+                </div>
+              </div>
+            );
+          }
+
+          const color = planetColors[e.lord] || 'bg-slate-600/50';
+          const pColor = pointerColors[e.lord] || 'border-l-slate-600';
+          const duration = parseFloat(e.endAge) - parseFloat(e.startAge);
+          const heightClass = duration > 15 ? 'min-h-[4rem]' : duration > 8 ? 'min-h-[3rem]' : 'min-h-[2.25rem]';
+
+          let prefix = '';
+          if (e.startAge === '0') prefix = lang === 'ml' ? 'ജനനം · ' : 'Birth · ';
+
+          return (
+            <div key={i} className={`flex items-stretch ${heightClass} border-t border-slate-800/40 first:border-t-0`}>
+              <div className={`${color} w-4 sm:w-5 flex-shrink-0 relative ${i === 0 ? 'rounded-tl-xl' : ''}`}>
+                {(e.status === 'current' || e.status === 'upcoming') && (
+                  <div className={`absolute -right-[7px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[7px] ${pColor} z-10`}></div>
+                )}
+              </div>
+              <div className={`flex-1 py-1.5 pl-4 sm:pl-5 pr-3 flex items-center flex-wrap gap-x-2 ${e.status === 'current' ? 'bg-amber-500/5' : e.status === 'upcoming' ? 'bg-indigo-500/5' : ''}`}>
+                {e.status === 'current' && (
+                  <span className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-amber-400 border border-amber-500/30 rounded px-1.5 py-0.5 bg-amber-500/10">
+                    {lang === 'ml' ? 'നിലവിൽ' : 'CURRENT'}
+                  </span>
+                )}
+                {e.status === 'upcoming' && (
+                  <span className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-indigo-400 border border-indigo-500/30 rounded px-1.5 py-0.5 bg-indigo-500/10">
+                    {lang === 'ml' ? 'അടുത്തത്' : 'UPCOMING'}
+                  </span>
+                )}
+                <span className={`font-semibold text-sm font-serif ${e.status === 'current' ? 'text-amber-200' : e.status === 'upcoming' ? 'text-indigo-200' : e.status === 'past' ? 'text-slate-500' : 'text-slate-300'}`}>
+                  {prefix}{t(e.lord)}
+                </span>
+                <span className={`text-xs ${e.status === 'current' ? 'text-amber-500/70' : e.status === 'upcoming' ? 'text-indigo-400/70' : 'text-slate-600'}`}>
+                  ({e.startAge === '0' ? `to ${e.endAge}y` : `${e.startAge}–${e.endAge}y`}{e.theme ? ` · ${e.theme}` : ''})
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const DashaSection = ({ dashaTimeline, currentDasha, chart, ashtakavargaResult, lang }) => {
   const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key, lang) : key;
   const [expandedDasha, setExpandedDasha] = React.useState(null);
@@ -967,6 +1042,7 @@ function JyothishamApp() {
       iconElement: <Calendar size={20} />,
       content: (
         <React.Fragment>
+          <LifeGlanceTimeline dashaTimeline={cr.dashaTimeline} currentDasha={currentDasha} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} lang={lang} />
           <DashaSection dashaTimeline={cr.dashaTimeline} currentDasha={currentDasha} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} lang={lang} />
           <LifeGraph dashaTimeline={cr.dashaTimeline} chart={cr.chart} ashtakavargaResult={cr.ashtakavargaResult} lang={lang} />
         </React.Fragment>

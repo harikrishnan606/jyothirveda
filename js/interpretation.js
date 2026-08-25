@@ -1197,6 +1197,75 @@ const Interpretation = (() => {
     };
   }
 
+  function generateMahaDashaSummary(dashaTimeline, chart, ashtakavargaResult, currentDasha, lang = 'en') {
+    if (!dashaTimeline || !dashaTimeline.length) return [];
+    
+    const summary = [];
+    const birthJD = dashaTimeline[0].startJD;
+    
+    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key, lang) : key;
+    
+    let upcomingIndex = -1;
+    let currentIndex = -1;
+    if (currentDasha) {
+        currentIndex = dashaTimeline.findIndex(d => d.lord === currentDasha.maha.lord);
+        if (currentIndex !== -1 && currentIndex < dashaTimeline.length - 1) {
+            upcomingIndex = currentIndex + 1;
+        }
+    }
+    
+    dashaTimeline.forEach((d, i) => {
+        let startAgeStr = ((d.startJD - birthJD) / 365.25).toFixed(1);
+        let endAgeStr = ((d.endJD - birthJD) / 365.25).toFixed(1);
+        if (i === 0) startAgeStr = '0';
+        
+        let themeEn = '';
+        let themeMl = '';
+        if (d.lord === 'Sun') { themeEn = 'Changes, Authority'; themeMl = 'അധികാരം, മാറ്റങ്ങൾ'; }
+        else if (d.lord === 'Moon') { themeEn = 'Peak Wealth, Peace'; themeMl = 'സമ്പത്ത്, സമാധാനം'; }
+        else if (d.lord === 'Mars') { themeEn = 'Property, Action'; themeMl = 'സ്വത്ത്, പ്രയത്നം'; }
+        else if (d.lord === 'Mercury') { themeEn = 'Education, Career'; themeMl = 'വിദ്യാഭ്യാസം, തൊഴിൽ'; }
+        else if (d.lord === 'Jupiter') { themeEn = 'Wealth, Expansion'; themeMl = 'സമ്പത്ത്, പുരോഗതി'; }
+        else if (d.lord === 'Venus') { themeEn = 'Golden Ed & Career'; themeMl = 'തൊഴിൽ, സുഖസൗകര്യങ്ങൾ'; }
+        else if (d.lord === 'Saturn') { themeEn = 'Discipline, Restructuring'; themeMl = 'അച്ചടക്കം, മാറ്റം'; }
+        else if (d.lord === 'Rahu') { themeEn = 'Ambition, Travel'; themeMl = 'യാത്രകൾ, ലക്ഷ്യങ്ങൾ'; }
+        else if (d.lord === 'Ketu') { themeEn = 'Spirituality, Detachment'; themeMl = 'ആത്മീയത, ഏകാന്തത'; }
+        
+        let status = 'past';
+        if (i === currentIndex) status = 'current';
+        else if (upcomingIndex !== -1 && i === upcomingIndex) status = 'upcoming';
+        else if (currentIndex !== -1 && i > currentIndex && (upcomingIndex === -1 || i > upcomingIndex)) status = 'future';
+        
+        summary.push({
+            lord: d.lord,
+            startAge: startAgeStr,
+            endAge: endAgeStr,
+            status,
+            theme: lang === 'ml' ? themeMl : themeEn
+        });
+    });
+    
+    const finalNodes = [];
+    let futureLords = [];
+    summary.forEach(node => {
+        if (node.status === 'past' || node.status === 'current' || node.status === 'upcoming') {
+            finalNodes.push(node);
+        } else {
+            futureLords.push(t(node.lord));
+        }
+    });
+    
+    if (futureLords.length > 0) {
+        finalNodes.push({
+            isGrouped: true,
+            label: futureLords.join(', '),
+            status: 'future'
+        });
+    }
+    
+    return finalNodes;
+  }
+
   // ─── Public API ───────────────────────────────────────────
   return {
     CITY_DB,
@@ -1211,6 +1280,7 @@ const Interpretation = (() => {
     getPlanetScore,
     generateLifePredictions,
     generateCurrentTimePredictions,
+    generateMahaDashaSummary,
     PLANET_REMEDIES,
     LAGNA_TRAITS
   };
