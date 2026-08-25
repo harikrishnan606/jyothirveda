@@ -436,14 +436,32 @@ const DashaSection = ({ dashaTimeline, currentDasha, chart, ashtakavargaResult, 
                     {antars.map((a, j) => {
                       const isCurrentAntar = isCurrent && currentDasha && currentDasha.antar.lord === a.lord;
                       const antarScore = Interpretation.getPlanetScore(a.lord, chart, ashtakavargaResult);
+                      const antarTheme = DASHA_THEMES[a.lord];
+                      const aThemeText = lang === 'ml' ? antarTheme?.ml : antarTheme?.en;
+
+                      let antarLabel = '';
+                      let antarColor = 'text-slate-400';
+                      if (antarScore >= 75) { antarLabel = lang === 'ml' ? 'വളരെ അനുകൂലം' : 'Outstanding'; antarColor = 'text-emerald-400'; }
+                      else if (antarScore >= 60) { antarLabel = lang === 'ml' ? 'അനുകൂലം' : 'Favorable'; antarColor = 'text-green-400'; }
+                      else if (antarScore < 40) { antarLabel = lang === 'ml' ? 'പ്രതികൂലം' : 'Challenging'; antarColor = 'text-rose-400'; }
+                      else { antarLabel = lang === 'ml' ? 'സാധാരണം' : 'Average'; antarColor = 'text-slate-400'; }
+
                       return (
-                        <div key={j} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${isCurrentAntar ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-slate-800/30'}`}>
-                          <span className="font-mono text-[10px] text-slate-500 w-24 flex-shrink-0">{a.startDate.dateStr}</span>
-                          <div className="flex-1 h-1.5 rounded-full bg-slate-700/50">
-                            <div className={`h-full rounded-full ${isCurrentAntar ? 'bg-amber-400' : antarScore >= 60 ? 'bg-emerald-500/60' : antarScore < 40 ? 'bg-rose-500/60' : 'bg-indigo-500/40'}`} style={{ width: `${Math.min(100, Math.max(15, antarScore))}%` }}></div>
+                        <div key={j} className={`flex flex-col gap-1.5 px-3 py-2 rounded-lg border ${isCurrentAntar ? 'bg-amber-500/10 border-amber-500/30 shadow-sm shadow-amber-900/20' : 'bg-slate-900/40 border-slate-700/30 hover:bg-slate-800/40'}`}>
+                          <div className="flex items-center gap-2">
+                            <span className={`font-mono text-[10px] w-24 flex-shrink-0 ${isCurrentAntar ? 'text-amber-400/80 font-semibold' : 'text-slate-500'}`}>{a.startDate.dateStr}</span>
+                            <div className="flex-1 h-1.5 rounded-full bg-slate-800/80 overflow-hidden">
+                              <div className={`h-full rounded-full transition-all duration-500 ${isCurrentAntar ? 'bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.5)]' : antarScore >= 60 ? 'bg-emerald-500/60' : antarScore < 40 ? 'bg-rose-500/60' : 'bg-indigo-500/40'}`} style={{ width: `${Math.min(100, Math.max(15, antarScore))}%` }}></div>
+                            </div>
+                            <span className={`w-20 text-right font-medium text-sm ${isCurrentAntar ? 'text-amber-400 font-bold' : 'text-slate-200'}`}>{t(a.lord)}</span>
+                            <span className="font-mono text-[9px] text-slate-600 w-12 text-right flex-shrink-0">{a.durationStr}</span>
                           </div>
-                          <span className={`w-20 text-right font-medium ${isCurrentAntar ? 'text-amber-300' : 'text-slate-300'}`}>{t(a.lord)}</span>
-                          <span className="font-mono text-[9px] text-slate-600 w-16 text-right flex-shrink-0">{a.durationStr}</span>
+                          {aThemeText && (
+                            <div className="flex items-center justify-between pl-[6.5rem] pr-14">
+                              <p className="text-[10px] text-slate-400/80 truncate mr-2">{aThemeText}</p>
+                              <span className={`text-[9px] font-bold tracking-widest uppercase flex-shrink-0 ${antarColor}`}>{antarLabel}</span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
