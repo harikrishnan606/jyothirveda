@@ -576,59 +576,6 @@ const Interpretation = (() => {
     return remedies;
   }
 
-  function interpretHealthDetails(chart, lang = 'en') {
-    const lagna = chart.lagnaRasiIndex;
-    const vulnerabilities = [];
-
-    // Add specific planetary vulnerabilities based on 6th lord
-    const lord6 = VedicCore.getLordOf(6, lagna);
-    if (lord6 === 'Mars') vulnerabilities.push({ text: lang === 'ml' ? 'ശരീരത്തിലെ ചൂട്/വീക്കം' : 'Inflammation/Heat', icon: 'Flame' });
-    if (lord6 === 'Mercury') vulnerabilities.push({ text: lang === 'ml' ? 'നാഡീവ്യൂഹം' : 'Nervous System', icon: 'Brain' });
-    if (lord6 === 'Saturn') vulnerabilities.push({ text: lang === 'ml' ? 'സന്ധികൾ/എല്ലുകൾ' : 'Joints/Bones', icon: 'Activity' });
-
-    const cautions = [];
-    const h6Occupants = chart.houses[6].occupants;
-    if (h6Occupants.includes('Saturn')) cautions.push(lang === 'ml' ? 'ദീർഘകാല ആരോഗ്യ പ്രശ്നങ്ങൾക്ക് സാധ്യത' : 'Prone to chronic issues requiring discipline');
-    if (h6Occupants.includes('Mars')) cautions.push(lang === 'ml' ? 'മുറിവുകൾ/അപകടങ്ങൾ ശ്രദ്ധിക്കുക' : 'Prone to injuries/surgery');
-    if (h6Occupants.includes('Rahu')) cautions.push(lang === 'ml' ? 'കണ്ടുപിടിക്കാൻ ബുദ്ധിമുട്ടുള്ള അസുഖങ്ങൾ' : 'Hard-to-diagnose ailments');
-
-    const behavioral = [];
-    if (chart.planets.Moon.house === 6 || chart.planets.Moon.house === 8 || chart.planets.Moon.house === 12) {
-      behavioral.push({ text: lang === 'ml' ? 'വൈകാരിക സമ്മർദ്ദം ആരോഗ്യത്തെ ബാധിക്കാം' : 'Emotional stress affects health', icon: 'Heart' });
-    }
-    if (chart.planets.Sun.dignity === 'Debilitated' || chart.planets.Sun.house === 8) {
-      behavioral.push({ text: lang === 'ml' ? 'പ്രതിരോധശേഷി കുറയാൻ സാധ്യത' : 'Low vitality/immunity', icon: 'ShieldAlert' });
-    }
-
-    // Longevity Analysis (BPHS Ch. 44)
-    const lord8 = VedicCore.getLordOf(8, lagna);
-    const l8Data = chart.planets[lord8];
-    const lagnaLord = VedicCore.getLordOf(1, lagna);
-    const llData = chart.planets[lagnaLord];
-    
-    let longevityText = lang === 'ml' ? 'സാധാരണ ആരോഗ്യദൈർഘ്യം' : 'Moderate Vitality and Longevity';
-    
-    // Balarishta condition (Moon in 6,8,12 aspected by malefics)
-    const moonH = chart.planets.Moon.house;
-    if ([6, 8, 12].includes(moonH)) {
-        longevityText = lang === 'ml' ? 'ബാലാരിഷ്ടത (കുട്ടിക്കാലത്തെ ആരോഗ്യപ്രശ്നങ്ങൾ ശ്രദ്ധിക്കുക)' : 'Balarishta indications: Requires care during early childhood';
-    } 
-    // Strong longevity condition
-    else if (['Exalted', 'Own', 'Friendly'].includes(llData.dignity) && ['Exalted', 'Own', 'Friendly'].includes(l8Data.dignity)) {
-        longevityText = lang === 'ml' ? 'ദീർഘായുസ്സും മികച്ച ആരോഗ്യവും' : 'Purna Ayus (Long Life) indicated by strong Lagna and 8th Lord';
-    }
-
-    if (cautions.length === 0) {
-      cautions.push(lang === 'ml' ? 'പ്രധാനപ്പെട്ട ആരോഗ്യ മുന്നറിയിപ്പുകളില്ല' : 'No major planetary health afflictions');
-    }
-
-    return { 
-      vulnerabilities: vulnerabilities.slice(0,4), 
-      behavioral: behavioral.slice(0,2), 
-      cautions,
-      longevity: longevityText 
-    };
-  }
 
   function generateInsights(chart, dashaResult, ashtakavargaResult, yogaDoshaResults, lang = 'en') {
     const insights = [];
@@ -983,8 +930,9 @@ const Interpretation = (() => {
       travelStr = lang === 'ml' ? 'ഗ്രഹങ്ങളുടെ നിലവിലെ ദശാകാലം അടിസ്ഥാനമാക്കിയുള്ള സാധാരണ യാത്രാ സാധ്യതകൾ' : 'Moderate travel prospects based on current planetary periods';
     }
 
-    const primaryPlanets = [lord9, lord12, 'Rahu', 'Moon'];
-    const upcomingWindows = findFavorablePeriods(dashaTimeline, primaryPlanets, [], 2, 3, lang);
+    const primaryPlanets = [lord9, lord12, 'Rahu'];
+    const secondaryTravelPlanets = ['Moon'];
+    const upcomingWindows = findFavorablePeriods(dashaTimeline, primaryPlanets, secondaryTravelPlanets, 2, 3, lang);
     
     return { text: travelStr, windows: upcomingWindows };
   }
@@ -1060,10 +1008,17 @@ const Interpretation = (() => {
     
     let longevityText = lang === 'ml' ? 'സാധാരണ ആരോഗ്യദൈർഘ്യം' : 'Moderate Vitality and Longevity';
     
-    // Balarishta condition (Moon in 6,8,12 aspected by malefics)
+    // Balarishta condition (BPHS Ch. 7): Moon in 6,8,12 AND aspected by malefics, WITHOUT benefic cancellation
     const moonH = chart.planets.Moon.house;
     if ([6, 8, 12].includes(moonH)) {
-        longevityText = lang === 'ml' ? 'ബാലാരിഷ്ടത (കുട്ടിക്കാലത്തെ ആരോഗ്യപ്രശ്നങ്ങൾ ശ്രദ്ധിക്കുക)' : 'Balarishta indications: Requires care during early childhood';
+        const malefics = ['Sun', 'Mars', 'Saturn', 'Rahu', 'Ketu'];
+        const benefics = ['Jupiter', 'Venus', 'Mercury'];
+        const maleficAspectsMoon = malefics.some(m => chart.planets[m].aspects && chart.planets[m].aspects.includes(moonH));
+        const beneficAspectsMoon = benefics.some(b => chart.planets[b].aspects && chart.planets[b].aspects.includes(moonH));
+        
+        if (maleficAspectsMoon && !beneficAspectsMoon) {
+            longevityText = lang === 'ml' ? 'ബാലാരിഷ്ടത (കുട്ടിക്കാലത്തെ ആരോഗ്യപ്രശ്നങ്ങൾ ശ്രദ്ധിക്കുക)' : 'Balarishta indications: Requires care during early childhood';
+        }
     } 
     // Strong longevity condition
     else if (['Exalted', 'Own', 'Friendly'].includes(llData.dignity) && ['Exalted', 'Own', 'Friendly'].includes(l8Data.dignity)) {
