@@ -601,6 +601,211 @@ const YogaDosha = (() => {
    * Saturn transiting 12th, 1st, or 2nd house from natal Moon sign.
    * This checks the natal chart itself (not transits).
    */
+  // ─── NEW YOGAS ─────────────────────────────────────────────
+
+  /** Chandra-Mangal Yoga: Moon and Mars conjunct or in mutual aspect */
+  function detectChandraMangalYoga(chart) {
+    const moon = chart.planets.Moon;
+    const mars = chart.planets.Mars;
+    const conjunct = areConjunct(moon, mars);
+    const mutualAsp = hasMutualAspect('Moon', moon, 'Mars', mars);
+    if (!conjunct && !mutualAsp) return [];
+    const formation = conjunct
+      ? `Moon and Mars conjunct in House ${moon.house} (${moon.rasi.name})`
+      : `Moon in House ${moon.house} and Mars in House ${mars.house} in mutual aspect`;
+    return [{
+      name: 'Chandra-Mangal Yoga',
+      type: 'yoga',
+      rule: 'Moon and Mars in conjunction or mutual aspect. BPHS Ch.36.',
+      formation,
+      effect: 'Financial gains through trade, business acumen, and maternal blessings. Creates a sharp, energetic mind.',
+      strength: moon.dignity !== 'Debilitated' && mars.dignity !== 'Debilitated' ? 'Strong' : 'Moderate',
+      confidence: 'HIGH',
+      cancellation: 'N/A',
+      residual: 'Wealth through effort and bold action.'
+    }];
+  }
+
+  /** Saraswati Yoga: Jupiter, Venus, Mercury all in Kendra or Trikona */
+  function detectSaraswatiYoga(chart) {
+    const lagna = chart.lagnaRasiIndex;
+    const jup = chart.planets.Jupiter;
+    const ven = chart.planets.Venus;
+    const mer = chart.planets.Mercury;
+    const goodHouses = [1,2,4,5,7,9,10]; // Kendra + Trikona + 2nd
+    const jupOk = goodHouses.includes(jup.house) && (jup.dignity === 'Exalted' || jup.dignity === 'Own' || jup.dignity === 'Friendly');
+    const venOk = goodHouses.includes(ven.house);
+    const merOk = goodHouses.includes(mer.house);
+    if (!jupOk || !venOk || !merOk) return [];
+    return [{
+      name: 'Saraswati Yoga',
+      type: 'yoga',
+      rule: 'Jupiter (strong), Venus, and Mercury all in Kendra, Trikona, or 2nd house. Phaladeepika Ch.6.',
+      formation: `Jupiter in H${jup.house} (${jup.dignity}), Venus in H${ven.house}, Mercury in H${mer.house}`,
+      effect: 'Exceptional intelligence, eloquence, mastery of arts and sciences. Fame through knowledge and creativity.',
+      strength: 'Strong',
+      confidence: 'HIGH',
+      cancellation: 'N/A',
+      residual: 'Lifelong blessing of learning, wisdom, and creative expression.'
+    }];
+  }
+
+  /** Sunapha / Anapha / Durudhara Yoga: planets 2nd/12th from Moon */
+  function detectSunaphaDurudhara(chart) {
+    const yogas = [];
+    const moonHouse = chart.planets.Moon.house;
+    const benefics = ['Jupiter', 'Venus', 'Mercury'];
+    const PLANETS = ['Sun','Mars','Mercury','Jupiter','Venus','Saturn'];
+    const secondFromMoon = ((moonHouse - 1 + 1) % 12) + 1;
+    const twelfthFromMoon = ((moonHouse - 1 + 11) % 12) + 1;
+    const inSecond = PLANETS.filter(p => chart.planets[p].house === secondFromMoon);
+    const inTwelfth = PLANETS.filter(p => chart.planets[p].house === twelfthFromMoon);
+    if (inSecond.length > 0 && inTwelfth.length === 0) {
+      yogas.push({
+        name: 'Sunapha Yoga',
+        type: 'yoga',
+        rule: 'Planet(s) in 2nd from Moon (excluding Sun). BPHS Ch.23.',
+        formation: `${inSecond.join(', ')} in 2nd from Moon (House ${secondFromMoon})`,
+        effect: 'Self-made wealth, good intellect, leadership qualities, and respected status in society.',
+        strength: 'Moderate', confidence: 'MODERATE', cancellation: 'N/A',
+        residual: 'Resourcefulness and prosperity through personal effort.'
+      });
+    }
+    if (inTwelfth.length > 0 && inSecond.length === 0) {
+      yogas.push({
+        name: 'Anapha Yoga',
+        type: 'yoga',
+        rule: 'Planet(s) in 12th from Moon (excluding Sun). BPHS Ch.23.',
+        formation: `${inTwelfth.join(', ')} in 12th from Moon (House ${twelfthFromMoon})`,
+        effect: 'Good health, physical appearance, renown, and spiritual inclination. Graceful personality.',
+        strength: 'Moderate', confidence: 'MODERATE', cancellation: 'N/A',
+        residual: 'Good name, vitality, and spiritual depth.'
+      });
+    }
+    if (inSecond.length > 0 && inTwelfth.length > 0) {
+      yogas.push({
+        name: 'Durudhura Yoga',
+        type: 'yoga',
+        rule: 'Planets both in 2nd and 12th from Moon. BPHS Ch.23.',
+        formation: `${inSecond.join(', ')} in H${secondFromMoon} and ${inTwelfth.join(', ')} in H${twelfthFromMoon}`,
+        effect: 'Abundance of material comforts, wealth, fame, and generous character. Surrounded by loyal helpers.',
+        strength: 'Strong', confidence: 'HIGH', cancellation: 'N/A',
+        residual: 'Rich material life with strong social standing.'
+      });
+    }
+    return yogas;
+  }
+
+  /** Parivartana Yoga: mutual sign exchange between two planets */
+  function detectParivartanaYoga(chart) {
+    const yogas = [];
+    const PLANETS = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
+    const checked = new Set();
+    for (const p1 of PLANETS) {
+      for (const p2 of PLANETS) {
+        if (p1 === p2 || checked.has(`${p2}-${p1}`)) continue;
+        checked.add(`${p1}-${p2}`);
+        const p1Data = chart.planets[p1];
+        const p2Data = chart.planets[p2];
+        const lordOfP1Sign = VedicCore.RASIS[p1Data.rasi.index].lord;
+        const lordOfP2Sign = VedicCore.RASIS[p2Data.rasi.index].lord;
+        if (lordOfP1Sign !== p2 || lordOfP2Sign !== p1) continue;
+        const h1 = p1Data.house, h2 = p2Data.house;
+        const isDusthana = [6,8,12].includes(h1) || [6,8,12].includes(h2);
+        const isKendra = [1,4,7,10].includes(h1) || [1,4,7,10].includes(h2);
+        const isTrikona = [1,5,9].includes(h1) || [1,5,9].includes(h2);
+        const strength = isKendra && isTrikona ? 'Raja Parivartana' : isDusthana ? 'Dainya Parivartana' : 'Maha Parivartana';
+        yogas.push({
+          name: `Parivartana Yoga (${strength})`,
+          type: 'yoga',
+          rule: `${p1} and ${p2} in mutual sign exchange. BPHS Ch.26.`,
+          formation: `${p1} in ${p1Data.rasi.name} (H${h1}) ↔ ${p2} in ${p2Data.rasi.name} (H${h2})`,
+          effect: isDusthana
+            ? 'Mixed results — planets exchange Dusthana signs. May indicate karmic challenges that eventually transform.'
+            : isKendra && isTrikona
+            ? 'Powerful Raja Yoga effect. Mutual exchange of Kendra and Trikona lords — exceptional rise, recognition, and fortune.'
+            : `Each planet gains strength by acting as the other. Combines the significations of Houses ${h1} and ${h2}.`,
+          strength: isDusthana ? 'Moderate' : 'Strong',
+          confidence: 'HIGH', cancellation: 'N/A',
+          residual: isDusthana ? 'Challenges lead to eventual growth.' : `Fusion of Houses ${h1} and ${h2} brings combined benefits.`
+        });
+      }
+    }
+    return yogas;
+  }
+
+  /** Adhi Yoga: natural benefics (Jupiter, Venus, Mercury) in 6th, 7th, 8th from Moon */
+  function detectAdhiYoga(chart) {
+    const moonHouse = chart.planets.Moon.house;
+    const h6 = ((moonHouse - 1 + 5) % 12) + 1;
+    const h7 = ((moonHouse - 1 + 6) % 12) + 1;
+    const h8 = ((moonHouse - 1 + 7) % 12) + 1;
+    const benefics = ['Jupiter', 'Venus', 'Mercury'];
+    const in678 = benefics.filter(p => [h6, h7, h8].includes(chart.planets[p].house));
+    if (in678.length < 2) return [];
+    return [{
+      name: 'Adhi Yoga',
+      type: 'yoga',
+      rule: 'Natural benefics (Jupiter, Venus, Mercury) in 6th, 7th, 8th from Moon. BPHS Ch.36.',
+      formation: `${in678.join(', ')} in 6th/7th/8th from Moon`,
+      effect: 'Leadership, wealth, and authority. Defeats enemies effortlessly. If all 3 benefics present, indicates minister/ruler-level status.',
+      strength: in678.length === 3 ? 'Strong' : 'Moderate',
+      confidence: in678.length === 3 ? 'HIGH' : 'MODERATE',
+      cancellation: 'N/A',
+      residual: 'Gains through expertise, diplomacy, and virtue.'
+    }];
+  }
+
+  /** Amala Yoga: only benefics in 10th from Lagna or Moon */
+  function detectAmalaYoga(chart) {
+    const lagna = chart.lagnaRasiIndex;
+    const moonHouse = chart.planets.Moon.house;
+    const h10FromLagna = 10;
+    const h10FromMoon = ((moonHouse - 1 + 9) % 12) + 1;
+    const benefics = ['Jupiter', 'Venus', 'Mercury', 'Moon'];
+    const malefics = ['Sun', 'Mars', 'Saturn', 'Rahu', 'Ketu'];
+    const inH10Lagna = Object.keys(chart.planets).filter(p => chart.planets[p].house === h10FromLagna);
+    const inH10Moon = Object.keys(chart.planets).filter(p => chart.planets[p].house === h10FromMoon);
+    const lagnaAmala = inH10Lagna.length > 0 && inH10Lagna.every(p => benefics.includes(p));
+    const moonAmala = inH10Moon.length > 0 && inH10Moon.every(p => benefics.includes(p));
+    if (!lagnaAmala && !moonAmala) return [];
+    const from = lagnaAmala ? 'Lagna' : 'Moon';
+    const planets = lagnaAmala ? inH10Lagna : inH10Moon;
+    return [{
+      name: 'Amala Yoga',
+      type: 'yoga',
+      rule: `Only natural benefics in 10th from ${from}. BPHS.`,
+      formation: `${planets.join(', ')} in 10th from ${from} — no malefics`,
+      effect: 'Spotless reputation, pure character, fame, and lasting prosperity. Career built on ethics and virtue.',
+      strength: 'Moderate', confidence: 'MODERATE', cancellation: 'N/A',
+      residual: 'Long-lasting good name and moral authority.'
+    }];
+  }
+
+  /** Shrapit Dosha: Saturn and Rahu conjunct or in mutual aspect */
+  function detectShrapitDosha(chart) {
+    const saturn = chart.planets.Saturn;
+    const rahu = chart.planets.Rahu;
+    const conjunct = areConjunct(saturn, rahu);
+    const saturnsAspectsRahu = saturn.aspects && saturn.aspects.includes(rahu.house);
+    const present = conjunct || saturnsAspectsRahu;
+    const formation = conjunct
+      ? `Saturn and Rahu conjunct in House ${saturn.house} (${saturn.rasi.name})`
+      : `Saturn in H${saturn.house} aspects Rahu in H${rahu.house}`;
+    return [{
+      name: 'Shrapit Dosha',
+      type: 'dosha',
+      disputed: true,
+      present,
+      rule: 'Saturn conjunct or aspecting Rahu — karmic affliction from past-life actions. Post-classical text.',
+      formation: present ? formation : `Saturn in H${saturn.house}, Rahu in H${rahu.house} — no conjunction or aspect`,
+      strength: present ? (conjunct ? 'Full' : 'Partial') : 'Absent',
+      cancellation: present && (saturn.dignity === 'Exalted' || rahu.house === 3 || rahu.house === 6) ? 'Partially mitigated by Saturn dignity or Rahu placement' : 'No cancellation',
+      residual: present ? 'Karmic delays, obstacles from past-life debts. Requires dedicated spiritual practice and service.' : 'No Shrapit Dosha. Free from this karmic pattern.',
+      confidence: 'MODERATE'
+    }];
+  }
+
   function detectSadeSati(chart) {
     const moonRasi = chart.planets.Moon.rasi.index;
     const saturnRasi = chart.planets.Saturn.rasi.index;
@@ -643,11 +848,18 @@ const YogaDosha = (() => {
     const budhaAditya = detectBudhaAdityaYoga(chart);
     const vipareeta = detectVipareetaRajaYoga(chart);
     const neechaBhanga = detectNeechaBhangaRajaYoga(chart);
+    const chandraMangal = detectChandraMangalYoga(chart);
+    const saraswati = detectSaraswatiYoga(chart);
+    const sunaphaGroup = detectSunaphaDurudhara(chart);
+    const parivartana = detectParivartanaYoga(chart);
+    const adhi = detectAdhiYoga(chart);
+    const amala = detectAmalaYoga(chart);
 
     const manglik = detectManglikDosha(chart);
     const kalaSarpa = detectKalaSarpaDosha(chart);
     const kemadruma = detectKemadrumaDosha(chart);
     const sadeSati = detectSadeSati(chart);
+    const shrapit = detectShrapitDosha(chart);
 
     const allYogas = [
       ...rajaYogas,
@@ -656,13 +868,20 @@ const YogaDosha = (() => {
       ...gajakesari,
       ...budhaAditya,
       ...vipareeta,
-      ...neechaBhanga
+      ...neechaBhanga,
+      ...chandraMangal,
+      ...saraswati,
+      ...sunaphaGroup,
+      ...parivartana,
+      ...adhi,
+      ...amala
     ];
 
     const allDoshas = [
       ...manglik,
       ...kalaSarpa,
-      ...kemadruma
+      ...kemadruma,
+      ...shrapit
     ];
 
     // Absent Pancha Mahapurusha (for reporting all 5)
@@ -692,12 +911,21 @@ const YogaDosha = (() => {
     detectBudhaAdityaYoga,
     detectVipareetaRajaYoga,
     detectNeechaBhangaRajaYoga,
+    detectChandraMangalYoga,
+    detectSaraswatiYoga,
+    detectSunaphaDurudhara,
+    detectParivartanaYoga,
+    detectAdhiYoga,
+    detectAmalaYoga,
     detectManglikDosha,
     detectKalaSarpaDosha,
     detectKemadrumaDosha,
+    detectShrapitDosha,
     detectSadeSati,
     detectAll
   };
 })();
 
 if (typeof window !== 'undefined') window.YogaDosha = YogaDosha;
+
+

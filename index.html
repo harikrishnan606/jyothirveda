@@ -37,7 +37,7 @@ import { createRoot } from 'react-dom/client';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import {
   Moon, Sun, Star, MapPin, Clock, Calendar, ChevronDown, ChevronUp,
-  Activity, Award, Heart, Briefcase, Search, ShieldAlert, Sparkles, User,
+  Activity, Award, Heart, Briefcase, Search, ShieldAlert, Sparkles, User, Users,
   AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen,
   Target, HandMetal, Flame, Ban, Coins, Brain
 } from 'lucide-react';
@@ -687,6 +687,45 @@ function JyothishamApp() {
       )
     },
     {
+      id: 'family',
+      title: lang === 'ml' ? 'കുടുംബം (മാതാപിതാക്കളും സഹോദരങ്ങളും)' : 'Family (Parents & Siblings)',
+      iconElement: <Users size={20} />,
+      content: (
+        <div className="space-y-4 text-slate-300 leading-relaxed font-sans">
+          <h3 className="text-xl font-serif text-amber-400 mb-2">{t(cr.lifePredictions.family.title)}</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-700/30">
+              <h4 className="text-sm text-amber-400 uppercase tracking-widest mb-3 font-semibold border-b border-slate-700/50 pb-2">{t(cr.lifePredictions.family.father.title)}</h4>
+              <p className="text-xs text-slate-400 mb-1">{t('Lord')}: <span className="text-white">{cr.lifePredictions.family.father.lord}</span></p>
+              <p className="text-xs text-slate-400 mb-3">{t('Karaka')}: <span className="text-white">{cr.lifePredictions.family.father.karaka}</span></p>
+              <div className="bg-indigo-500/10 px-3 py-2 rounded border border-indigo-500/20 text-indigo-300 text-sm">
+                {t(cr.lifePredictions.family.father.status)}
+              </div>
+            </div>
+            
+            <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-700/30">
+              <h4 className="text-sm text-pink-400 uppercase tracking-widest mb-3 font-semibold border-b border-slate-700/50 pb-2">{t(cr.lifePredictions.family.mother.title)}</h4>
+              <p className="text-xs text-slate-400 mb-1">{t('Lord')}: <span className="text-white">{cr.lifePredictions.family.mother.lord}</span></p>
+              <p className="text-xs text-slate-400 mb-3">{t('Karaka')}: <span className="text-white">{cr.lifePredictions.family.mother.karaka}</span></p>
+              <div className="bg-pink-500/10 px-3 py-2 rounded border border-pink-500/20 text-pink-300 text-sm">
+                {t(cr.lifePredictions.family.mother.status)}
+              </div>
+            </div>
+            
+            <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-700/30">
+              <h4 className="text-sm text-emerald-400 uppercase tracking-widest mb-3 font-semibold border-b border-slate-700/50 pb-2">{t(cr.lifePredictions.family.siblings.title)}</h4>
+              <p className="text-xs text-slate-400 mb-1">{t('Lord')}: <span className="text-white">{cr.lifePredictions.family.siblings.lord}</span></p>
+              <p className="text-xs text-slate-400 mb-3">{t('Karaka')}: <span className="text-white">{cr.lifePredictions.family.siblings.karaka}</span></p>
+              <div className="bg-emerald-500/10 px-3 py-2 rounded border border-emerald-500/20 text-emerald-300 text-sm">
+                {t(cr.lifePredictions.family.siblings.status)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
       id: 'health',
       title: t('Health & Vitality Overview'),
       iconElement: <ShieldAlert size={20} />,
@@ -694,6 +733,7 @@ function JyothishamApp() {
         <div className="space-y-6 text-slate-300 leading-relaxed font-sans">
           <IconGrid items={[...cr.lifePredictions.health.vulnerabilities, ...cr.lifePredictions.health.behavioral].map(i => ({...i, text: t(i.text)}))} />
           <div>
+            <p className="mb-2"><strong className="text-white uppercase tracking-widest text-sm">{t('Vitality')}:</strong> <span className="text-indigo-300 font-medium">{t(cr.lifePredictions.health.longevity)}</span></p>
             <p><strong className="text-white uppercase tracking-widest text-sm">{t('Cautions')}:</strong> {cr.lifePredictions.health.cautions.map(c => t(c)).join(', ')}</p>
           </div>
         </div>
@@ -1049,6 +1089,8 @@ function JyothishamApp() {
                     {[
                       [t('Janma Rasi (Moon)'), coreData.janmaRasi],
                       [t('Janma Nakshatra'), coreData.janmaNakshatra],
+                      [lang === 'ml' ? 'നക്ഷത്ര ഗണം / സ്വഭാവം' : 'Nakshatra Gana/Quality', `${coreData.nakshatraGana} — ${coreData.nakshatraQuality}`],
+                      [lang === 'ml' ? 'നക്ഷത്ര ദേവത' : 'Nakshatra Deity', coreData.nakshatraDeity],
                       [t('Lagnam (Ascendant)'), coreData.lagnam, true],
                       [t('Tithi'), coreData.tithi],
                       [t('Vara'), coreData.vara],

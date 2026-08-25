@@ -560,16 +560,64 @@ const Interpretation = (() => {
     return remedies;
   }
 
-  // ─── Insights / Predictions ───────────────────────────────
-  /**
-   * Generate the 3 "High-Probability Predictions" insight cards.
-   * Based on current Dasha activation + SAV strength + yogas.
-   */
+  function interpretHealthDetails(chart, lang = 'en') {
+    const lagna = chart.lagnaRasiIndex;
+    const vulnerabilities = [];
+
+    // Add specific planetary vulnerabilities based on 6th lord
+    const lord6 = VedicCore.getLordOf(6, lagna);
+    if (lord6 === 'Mars') vulnerabilities.push({ text: lang === 'ml' ? 'ശരീരത്തിലെ ചൂട്/വീക്കം' : 'Inflammation/Heat', icon: 'Flame' });
+    if (lord6 === 'Mercury') vulnerabilities.push({ text: lang === 'ml' ? 'നാഡീവ്യൂഹം' : 'Nervous System', icon: 'Brain' });
+    if (lord6 === 'Saturn') vulnerabilities.push({ text: lang === 'ml' ? 'സന്ധികൾ/എല്ലുകൾ' : 'Joints/Bones', icon: 'Activity' });
+
+    const cautions = [];
+    const h6Occupants = chart.houses[6].occupants;
+    if (h6Occupants.includes('Saturn')) cautions.push(lang === 'ml' ? 'ദീർഘകാല ആരോഗ്യ പ്രശ്നങ്ങൾക്ക് സാധ്യത' : 'Prone to chronic issues requiring discipline');
+    if (h6Occupants.includes('Mars')) cautions.push(lang === 'ml' ? 'മുറിവുകൾ/അപകടങ്ങൾ ശ്രദ്ധിക്കുക' : 'Prone to injuries/surgery');
+    if (h6Occupants.includes('Rahu')) cautions.push(lang === 'ml' ? 'കണ്ടുപിടിക്കാൻ ബുദ്ധിമുട്ടുള്ള അസുഖങ്ങൾ' : 'Hard-to-diagnose ailments');
+
+    const behavioral = [];
+    if (chart.planets.Moon.house === 6 || chart.planets.Moon.house === 8 || chart.planets.Moon.house === 12) {
+      behavioral.push({ text: lang === 'ml' ? 'വൈകാരിക സമ്മർദ്ദം ആരോഗ്യത്തെ ബാധിക്കാം' : 'Emotional stress affects health', icon: 'Heart' });
+    }
+    if (chart.planets.Sun.dignity === 'Debilitated' || chart.planets.Sun.house === 8) {
+      behavioral.push({ text: lang === 'ml' ? 'പ്രതിരോധശേഷി കുറയാൻ സാധ്യത' : 'Low vitality/immunity', icon: 'ShieldAlert' });
+    }
+
+    // Longevity Analysis (BPHS Ch. 44)
+    const lord8 = VedicCore.getLordOf(8, lagna);
+    const l8Data = chart.planets[lord8];
+    const lagnaLord = VedicCore.getLordOf(1, lagna);
+    const llData = chart.planets[lagnaLord];
+    
+    let longevityText = lang === 'ml' ? 'സാധാരണ ആരോഗ്യദൈർഘ്യം' : 'Moderate Vitality and Longevity';
+    
+    // Balarishta condition (Moon in 6,8,12 aspected by malefics)
+    const moonH = chart.planets.Moon.house;
+    if ([6, 8, 12].includes(moonH)) {
+        longevityText = lang === 'ml' ? 'ബാലാരിഷ്ടത (കുട്ടിക്കാലത്തെ ആരോഗ്യപ്രശ്നങ്ങൾ ശ്രദ്ധിക്കുക)' : 'Balarishta indications: Requires care during early childhood';
+    } 
+    // Strong longevity condition
+    else if (['Exalted', 'Own', 'Friendly'].includes(llData.dignity) && ['Exalted', 'Own', 'Friendly'].includes(l8Data.dignity)) {
+        longevityText = lang === 'ml' ? 'ദീർഘായുസ്സും മികച്ച ആരോഗ്യവും' : 'Purna Ayus (Long Life) indicated by strong Lagna and 8th Lord';
+    }
+
+    if (cautions.length === 0) {
+      cautions.push(lang === 'ml' ? 'പ്രധാനപ്പെട്ട ആരോഗ്യ മുന്നറിയിപ്പുകളില്ല' : 'No major planetary health afflictions');
+    }
+
+    return { 
+      vulnerabilities: vulnerabilities.slice(0,4), 
+      behavioral: behavioral.slice(0,2), 
+      cautions,
+      longevity: longevityText 
+    };
+  }
+
   function generateInsights(chart, dashaResult, ashtakavargaResult, yogaDoshaResults, lang = 'en') {
     const insights = [];
     const currentDasha = dashaResult;
 
-    // Career insight (10th house)
     const house10Strength = ashtakavargaResult ?
       ashtakavargaResult.houseStrengths.find(h => h.house === 10) : null;
     const lord10 = VedicCore.getLordOf(10, chart.lagnaRasiIndex);
@@ -715,6 +763,9 @@ const Interpretation = (() => {
     return {
       janmaRasi: lang === 'ml' ? t(moonRasi.name) : `${t(moonRasi.name)} (${t(moonRasi.eng)})`,
       janmaNakshatra: lang === 'ml' ? `${t(moonNak.name)} (${moonNak.pada}-ാം പാദം)` : `${t(moonNak.name)} (Pada ${moonNak.pada})`,
+      nakshatraGana: moonNak.gana ? t(moonNak.gana) : '—',
+      nakshatraDeity: moonNak.deity ? t(moonNak.deity) : '—',
+      nakshatraQuality: moonNak.quality ? t(moonNak.quality) : '—',
       lagnam: lang === 'ml' ? t(chart.lagnaRasi.name) : `${t(chart.lagnaRasi.name)} (${t(chart.lagnaRasi.eng)})`,
       tithi: panchanga.tithi.name.split(' ').map(p => t(p)).join(' '),
       currentDasha: currentDasha ? (lang === 'ml' ? `${t(currentDasha.maha.lord)} ദശ (ബാക്കി ${currentDasha.maha.remaining.replace('y', ' വർഷം').replace('m', ' മാസം')})` : `${currentDasha.maha.lord} Dasha (${currentDasha.maha.remaining} remaining)`) : 'N/A',
@@ -864,11 +915,97 @@ const Interpretation = (() => {
 
     const cautions = lang === 'ml' ? ['ജോലിയും ജീവിതവും തമ്മിലുള്ള സന്തുലിതാവസ്ഥ', 'മാനസിക സമ്മർദ്ദം നിയന്ത്രിക്കുക'] : ['Work-life balance', 'Manage stress levels proactively'];
 
-    return { vulnerabilities: vulnerabilities.slice(0,4), behavioral: behavioral.slice(0,2), cautions };
+    // Longevity Analysis (BPHS Ch. 44)
+    const lord8 = VedicCore.getLordOf(8, lagna);
+    const l8Data = chart.planets[lord8];
+    const lagnaLord = VedicCore.getLordOf(1, lagna);
+    const llData = chart.planets[lagnaLord];
+    
+    let longevityText = lang === 'ml' ? 'സാധാരണ ആരോഗ്യദൈർഘ്യം' : 'Moderate Vitality and Longevity';
+    
+    // Balarishta condition (Moon in 6,8,12 aspected by malefics)
+    const moonH = chart.planets.Moon.house;
+    if ([6, 8, 12].includes(moonH)) {
+        longevityText = lang === 'ml' ? 'ബാലാരിഷ്ടത (കുട്ടിക്കാലത്തെ ആരോഗ്യപ്രശ്നങ്ങൾ ശ്രദ്ധിക്കുക)' : 'Balarishta indications: Requires care during early childhood';
+    } 
+    // Strong longevity condition
+    else if (['Exalted', 'Own', 'Friendly'].includes(llData.dignity) && ['Exalted', 'Own', 'Friendly'].includes(l8Data.dignity)) {
+        longevityText = lang === 'ml' ? 'ദീർഘായുസ്സും മികച്ച ആരോഗ്യവും' : 'Purna Ayus (Long Life) indicated by strong Lagna and 8th Lord';
+    }
+
+    return { 
+      vulnerabilities: vulnerabilities.slice(0,4), 
+      behavioral: behavioral.slice(0,2), 
+      cautions,
+      longevity: longevityText
+    };
+  }
+
+  function interpretFamily(chart, lang = 'en') {
+    const lagna = chart.lagnaRasiIndex;
+    
+    // Father (9th house & Sun)
+    const lord9 = VedicCore.getLordOf(9, lagna);
+    const h9Data = chart.houses[9];
+    const l9Data = chart.planets[lord9];
+    const sunData = chart.planets.Sun;
+    
+    // Mother (4th house & Moon)
+    const lord4 = VedicCore.getLordOf(4, lagna);
+    const h4Data = chart.houses[4];
+    const l4Data = chart.planets[lord4];
+    const moonData = chart.planets.Moon;
+    
+    // Siblings (3rd house & Mars)
+    const lord3 = VedicCore.getLordOf(3, lagna);
+    const h3Data = chart.houses[3];
+    const l3Data = chart.planets[lord3];
+    const marsData = chart.planets.Mars;
+
+    const t = (key) => window.i18n && window.i18n.t ? window.i18n.t(key, lang) : key;
+
+    const getStatus = (lordDignity, karakaDignity, houseOccupants) => {
+      let score = 0;
+      if (['Exalted', 'Own', 'Friendly'].includes(lordDignity)) score++;
+      else if (lordDignity === 'Debilitated') score--;
+      if (['Exalted', 'Own', 'Friendly'].includes(karakaDignity)) score++;
+      else if (karakaDignity === 'Debilitated') score--;
+      
+      const malefics = ['Sun', 'Mars', 'Saturn', 'Rahu', 'Ketu'];
+      const hasMalefics = houseOccupants.some(p => malefics.includes(p));
+      if (hasMalefics) score--;
+
+      if (score > 0) return lang === 'ml' ? 'അനുകൂലവും പിന്തുണ നൽകുന്നതും' : 'Favorable and supportive';
+      if (score < 0) return lang === 'ml' ? 'പ്രതിസന്ധികളോ അകൽച്ചയോ ഉണ്ടായേക്കാം' : 'May face challenges or distance';
+      return lang === 'ml' ? 'സാധാരണ ബന്ധം' : 'Moderate relationship';
+    };
+
+    return {
+      title: lang === 'ml' ? 'കുടുംബം (മാതാപിതാക്കളും സഹോദരങ്ങളും)' : 'Family (Parents & Siblings)',
+      father: {
+        title: lang === 'ml' ? 'പിതാവ് (9-ാം ഭാവം)' : 'Father (9th House)',
+        lord: `${lord9} (${l9Data.dignity})`,
+        karaka: `Sun (${sunData.dignity})`,
+        status: getStatus(l9Data.dignity, sunData.dignity, h9Data.occupants)
+      },
+      mother: {
+        title: lang === 'ml' ? 'മാതാവ് (4-ാം ഭാവം)' : 'Mother (4th House)',
+        lord: `${lord4} (${l4Data.dignity})`,
+        karaka: `Moon (${moonData.dignity})`,
+        status: getStatus(l4Data.dignity, moonData.dignity, h4Data.occupants)
+      },
+      siblings: {
+        title: lang === 'ml' ? 'സഹോദരങ്ങൾ (3-ാം ഭാവം)' : 'Siblings (3rd House)',
+        lord: `${lord3} (${l3Data.dignity})`,
+        karaka: `Mars (${marsData.dignity})`,
+        status: getStatus(l3Data.dignity, marsData.dignity, h3Data.occupants)
+      }
+    };
   }
 
   function generateLifePredictions(chart, dashaResult, lang = 'en') {
     return {
+      family: interpretFamily(chart, lang),
       finance: interpretFinance(chart, lang),
       marriage: interpretMarriage(chart, lang),
       children: interpretChildren(chart, lang),

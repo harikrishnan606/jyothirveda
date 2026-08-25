@@ -449,6 +449,77 @@ const i18nData = {
   }
 };
 
+Object.assign(i18nData.ml, {
+    // New Yogas
+    "Chandra-Mangal Yoga": "ചന്ദ്ര-മംഗള യോഗം",
+    "Saraswati Yoga": "സരസ്വതി യോഗം",
+    "Sunapha Yoga": "സുനഫ യോഗം",
+    "Anapha Yoga": "അനഫ യോഗം",
+    "Durudhura Yoga": "ദുരുധുര യോഗം",
+    "Parivartana Yoga (Maha Parivartana)": "പരിവർത്തന യോഗം (മഹാ പരിവർത്തന)",
+    "Parivartana Yoga (Raja Parivartana)": "പരിവർത്തന യോഗം (രാജ പരിവർത്തന)",
+    "Parivartana Yoga (Dainya Parivartana)": "പരിവർത്തന യോഗം (ദൈന്യ പരിവർത്തന)",
+    "Adhi Yoga": "അധി യോഗം",
+    "Amala Yoga": "അമല യോഗം",
+    "Shrapit Dosha": "ശ്രാപിത ദോഷം",
+
+    // Yoga Effects
+    "Financial gains through trade, business acumen, and maternal blessings. Creates a sharp, energetic mind.": "വ്യാപാരത്തിലൂടെയും ബിസിനസ്സ് ബുദ്ധിയിലൂടെയും സാമ്പത്തിക നേട്ടങ്ങൾ. മാതൃസഹായം ലഭിക്കും. ഊർജ്ജസ്വലവും കൂർമ്മതയുമുള്ള മനസ്സ് നൽകുന്നു.",
+    "Exceptional intelligence, eloquence, mastery of arts and sciences. Fame through knowledge and creativity.": "അസാധാരണമായ ബുദ്ധി, വാക്ചാതുര്യം, കലകളിലും ശാസ്ത്രങ്ങളിലുമുള്ള പ്രാവീണ്യം. അറിവിലൂടെയും സർഗ്ഗാത്മകതയിലൂടെയും പ്രശസ്തി.",
+    "Self-made wealth, good intellect, leadership qualities, and respected status in society.": "സ്വപ്രയത്നത്താൽ സമ്പാദിക്കുന്ന സമ്പത്ത്, നല്ല ബുദ്ധിശക്തി, നേതൃത്വഗുണങ്ങൾ, സമൂഹത്തിൽ മാന്യമായ പദവി.",
+    "Good health, physical appearance, renown, and spiritual inclination. Graceful personality.": "നല്ല ആരോഗ്യം, ആകർഷകമായ രൂപം, പ്രശസ്തി, ആത്മീയ താല്പര്യം. മനോഹരമായ വ്യക്തിത്വം.",
+    "Abundance of material comforts, wealth, fame, and generous character. Surrounded by loyal helpers.": "ഭൗതിക സൗകര്യങ്ങളുടെ സമൃദ്ധി, സമ്പത്ത്, പ്രശസ്തി, ഉദാരമായ സ്വഭാവം. വിശ്വസ്തരായ സഹായികളാൽ ചുറ്റപ്പെട്ട അവസ്ഥ.",
+    "Leadership, wealth, and authority. Defeats enemies effortlessly. If all 3 benefics present, indicates minister/ruler-level status.": "നേതൃത്വം, സമ്പത്ത്, അധികാരം. ശത്രുക്കളെ അനായാസം പരാജയപ്പെടുത്തുന്നു. ശുഭഗ്രഹങ്ങളുടെ സ്വാധീനത്താൽ ഭരണാധികാരിയുടെ പദവി.",
+    "Spotless reputation, pure character, fame, and lasting prosperity. Career built on ethics and virtue.": "കളങ്കമില്ലാത്ത പ്രശസ്തി, ശുദ്ധമായ സ്വഭാവം, നിലനിൽക്കുന്ന ഐശ്വര്യം. ധാർമ്മികതയിലും പുണ്യത്തിലും അധിഷ്ഠിതമായ കരിയർ.",
+
+    // Nakshatra Ganas
+    "Deva": "ദേവ ഗണം",
+    "Manushya": "മനുഷ്യ ഗണം",
+    "Rakshasa": "രാക്ഷസ ഗണം",
+
+    // Nakshatra Qualities
+    "Light/Swift": "ലഘു/വേഗത്തിലുള്ള",
+    "Fierce/Severe": "ഉഗ്ര/കഠിനമായ",
+    "Mixed": "മിശ്രിത",
+    "Fixed/Steady": "സ്ഥിരമായ",
+    "Soft/Mild": "മൃദുവായ",
+    "Sharp/Dreadful": "തീക്ഷ്ണ/ഭയങ്കര",
+    "Movable": "ചലിക്കുന്ന",
+
+    // Nakshatra Deities
+    "Ashwini Kumaras": "അശ്വിനി കുമാരന്മാർ",
+    "Yama": "യമൻ",
+    "Agni": "അഗ്നി",
+    "Brahma": "ബ്രഹ്മാവ്",
+    "Soma": "ചന്ദ്രൻ",
+    "Rudra": "രുദ്രൻ",
+    "Aditi": "അദിതി",
+    "Brihaspati": "ബൃഹസ്പതി",
+    "Sarpa": "സർപ്പം",
+    "Pitrs": "പിതൃക്കൾ",
+    "Aryaman": "ആര്യമാൻ",
+    "Bhaga": "ഭാഗൻ",
+    "Savitar": "സവിതാവ്",
+    "Tvashtar": "ത്വഷ്ടാവ്",
+    "Vayu": "വായു",
+    "Indra-Agni": "ഇന്ദ്രാഗ്നി",
+    "Mitra": "മിത്രൻ",
+    "Indra": "ഇന്ദ്രൻ",
+    "Nirriti": "നിര്യതി",
+    "Apas": "അപസ്",
+    "Vishvedevas": "വിശ്വദേവന്മാർ",
+    "Vishnu": "വിഷ്ണു",
+    "Vasus": "വസുക്കൾ",
+    "Varuna": "വരുണൻ",
+    "Aja Ekapada": "അജ ഏകപാദ",
+    "Ahir Budhnya": "അഹിർ ബുധ്ന്യ",
+    "Pushan": "പൂഷാവ്",
+    
+    // Core Data Extra
+    "Nakshatra Gana/Quality": "നക്ഷത്ര ഗണം / സ്വഭാവം",
+    "Nakshatra Deity": "നക്ഷത്ര ദേവത"
+});
+
 const i18n = {
   t: (key, lang = 'en') => {
     if (!key) return '';
