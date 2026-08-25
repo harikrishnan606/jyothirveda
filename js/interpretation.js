@@ -814,21 +814,9 @@ const Interpretation = (() => {
     };
 
     for (const maha of dashaTimeline) {
-      const mahaEnd = parseDate(maha.endDate.dateStr).getTime();
-      const isMahaPast = mahaEnd < nowTime;
-
-      let mahaProb = null;
+      let mahaProb = 'Low';
       if (primaryPlanets.includes(maha.lord)) mahaProb = 'High';
       else if (secondaryPlanets.includes(maha.lord)) mahaProb = 'Medium';
-
-      if (mahaProb === 'High') {
-        const periodStr = formatPeriod(maha.startDate.dateStr, maha.endDate.dateStr);
-        const reason = lang === 'ml' ? `${maha.lord} മഹാദശ (പ്രധാന സൂചകൻ)` : `${maha.lord} Mahadasha (Primary Significator)`;
-        if (!allPeriods.find(p => p.periodStr === periodStr)) {
-          allPeriods.push({ periodStr, probability: mahaProb, isPast: isMahaPast, reason });
-        }
-        continue;
-      }
 
       const antars = window.DashaSystem.getAntarDasha(maha);
       for (const antar of antars) {
@@ -836,13 +824,22 @@ const Interpretation = (() => {
         const isAntarPast = antarEnd < nowTime;
 
         let antarProb = null;
-        if (primaryPlanets.includes(antar.lord)) antarProb = mahaProb === 'Medium' ? 'High' : 'Medium';
-        else if (secondaryPlanets.includes(antar.lord)) antarProb = 'Low';
+        if (mahaProb === 'High') {
+            if (primaryPlanets.includes(antar.lord)) antarProb = 'High';
+            else if (secondaryPlanets.includes(antar.lord)) antarProb = 'High';
+        } else if (mahaProb === 'Medium') {
+            if (primaryPlanets.includes(antar.lord)) antarProb = 'High';
+            else if (secondaryPlanets.includes(antar.lord)) antarProb = 'Medium';
+        } else {
+            if (primaryPlanets.includes(antar.lord)) antarProb = 'Medium';
+        }
 
-        if (antarProb && antarProb !== 'Low') {
+        if (antarProb) {
           const periodStr = formatPeriod(antar.startDate.dateStr, antar.endDate.dateStr);
-          const reasonType = primaryPlanets.includes(antar.lord) ? (lang === 'ml' ? 'പ്രധാന സൂചകൻ' : 'Primary Significator') : (lang === 'ml' ? 'ദ്വിതീയ സൂചകൻ' : 'Secondary Significator');
-          const reason = lang === 'ml' ? `${maha.lord}-${antar.lord} ദശ (${reasonType})` : `${maha.lord}-${antar.lord} Dasha (${reasonType})`;
+          const reasonMaha = primaryPlanets.includes(maha.lord) ? (lang === 'ml' ? 'പ്രധാന' : 'Primary') : (secondaryPlanets.includes(maha.lord) ? (lang === 'ml' ? 'ദ്വിതീയ' : 'Secondary') : (lang === 'ml' ? 'സാധാരണ' : 'Neutral'));
+          const reasonAntar = primaryPlanets.includes(antar.lord) ? (lang === 'ml' ? 'പ്രധാന' : 'Primary') : (secondaryPlanets.includes(antar.lord) ? (lang === 'ml' ? 'ദ്വിതീയ' : 'Secondary') : (lang === 'ml' ? 'സാധാരണ' : 'Neutral'));
+          const reason = lang === 'ml' ? `${maha.lord} (${reasonMaha}) - ${antar.lord} (${reasonAntar}) ദശ` : `${maha.lord} (${reasonMaha}) - ${antar.lord} (${reasonAntar}) Dasha`;
+          
           if (!allPeriods.find(p => p.periodStr === periodStr)) {
             allPeriods.push({ periodStr, probability: antarProb, isPast: isAntarPast, reason });
           }
