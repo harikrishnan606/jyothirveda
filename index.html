@@ -599,7 +599,13 @@ function JyothishamApp() {
             </div>
           )}
           <h3 className="text-xl font-serif text-amber-400 mb-2">{t(cr.career.title)}</h3>
-          
+
+          {/* Career Trajectory */}
+          <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg mb-4">
+            <p className="text-xs text-indigo-400 uppercase tracking-widest font-semibold mb-1">{lang === 'ml' ? 'ഉദ്യോഗ ഗതി' : 'Career Trajectory'}</p>
+            <p className="text-sm text-white font-medium">{t(cr.career.trajectory)}</p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30">
               <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{t('Career Fields')}</p>
@@ -617,10 +623,36 @@ function JyothishamApp() {
               <Award size={24} className="text-amber-500/50" />
             </div>
           </div>
-          
+
           <div className="mt-4 text-sm space-y-1">
             <p><strong className="text-slate-400">{t('10th Lord')}:</strong> {t(cr.career.tenthLord)} ({t(cr.career.tenthLordDignity)})</p>
             {cr.career.occupants.length > 0 && <p><strong className="text-slate-400">{t('Occupants')}:</strong> {cr.career.occupants.map(o => t(o)).join(', ')}</p>}
+            {cr.career.aspectedBy && cr.career.aspectedBy.length > 0 && <p><strong className="text-slate-400">{lang === 'ml' ? '10-ാം ഭാവ ദൃഷ്ടി' : 'Aspected by'}:</strong> {cr.career.aspectedBy.map(p => t(p)).join(', ')}</p>}
+          </div>
+
+          {/* Wealth Section */}
+          <div className="mt-6 pt-5 border-t border-slate-700/40">
+            <h3 className="text-lg font-serif text-emerald-400 mb-3">{lang === 'ml' ? 'ഭൗതിക സമൃദ്ധി (ധന യോഗം)' : 'Wealth & Financial Potential'}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="p-3 bg-emerald-900/10 border border-emerald-700/20 rounded-lg">
+                <p className="text-xs text-emerald-500/70 uppercase tracking-widest mb-1">{lang === 'ml' ? 'ആകെ ഫലം' : 'Overall'}</p>
+                <p className="text-sm text-emerald-300 font-semibold">{t(cr.wealth.overall)}</p>
+              </div>
+              <div className="p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{lang === 'ml' ? 'വ്യാഴദൃഷ്ടി' : 'Jupiter Influence'}</p>
+                <p className="text-sm text-white">{t(cr.wealth.jupiterAspect)}</p>
+              </div>
+              <div className="p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{lang === 'ml' ? '2-ാം ഭാവാധിപൻ (ധനം)' : '2nd Lord (Wealth)'}</p>
+                <p className="text-sm text-white font-mono text-xs">{cr.wealth.secondLord}</p>
+                <p className="text-[10px] text-slate-500 mt-1">{lang === 'ml' ? 'SAV' : 'SAV Strength'}: {cr.wealth.house2SAV}</p>
+              </div>
+              <div className="p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">{lang === 'ml' ? '11-ാം ഭാവാധിപൻ (ലാഭം)' : '11th Lord (Gain)'}</p>
+                <p className="text-sm text-white font-mono text-xs">{cr.wealth.eleventhLord}</p>
+                <p className="text-[10px] text-slate-500 mt-1">{lang === 'ml' ? 'SAV' : 'SAV Strength'}: {cr.wealth.house11SAV}</p>
+              </div>
+            </div>
           </div>
         </div>
       )
@@ -1034,6 +1066,53 @@ function JyothishamApp() {
                   </GlassCard>
                 </div>
               </section>
+
+              {/* Planetary Positions Detailed Table */}
+              {cr && (
+                <section className="mb-10">
+                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Star size={16} className="text-amber-400" /> {lang === 'ml' ? 'ഗ്രഹ സ്ഥിതി വിശദാംശങ്ങൾ' : 'Planetary Positions Detail'}
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-700/50">
+                          <th className="text-left py-2 px-3 text-slate-500 font-semibold uppercase tracking-widest">{lang === 'ml' ? 'ഗ്രഹം' : 'Planet'}</th>
+                          <th className="text-left py-2 px-3 text-slate-500 font-semibold uppercase tracking-widest">{lang === 'ml' ? 'രാശി' : 'Sign'}</th>
+                          <th className="text-left py-2 px-3 text-slate-500 font-semibold uppercase tracking-widest">{lang === 'ml' ? 'ഭാവം' : 'House'}</th>
+                          <th className="text-left py-2 px-3 text-slate-500 font-semibold uppercase tracking-widest">{lang === 'ml' ? 'ഡിഗ്രി' : 'Degree'}</th>
+                          <th className="text-left py-2 px-3 text-slate-500 font-semibold uppercase tracking-widest">{lang === 'ml' ? 'നക്ഷത്രം' : 'Nakshatra'}</th>
+                          <th className="text-left py-2 px-3 text-slate-500 font-semibold uppercase tracking-widest">{lang === 'ml' ? 'ബലം' : 'Dignity'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(cr.chart.planets).map(([pName, p], idx) => {
+                          const deg = p.longitude ? (p.longitude % 30).toFixed(1) + '°' : '—';
+                          const nak = p.nakshatra ? `${t(p.nakshatra.name)} P${p.nakshatra.pada}` : '—';
+                          const dignityColor = p.dignity === 'Exalted' ? 'text-emerald-400' : p.dignity === 'Debilitated' ? 'text-rose-400' : p.dignity === 'Own' ? 'text-blue-400' : 'text-slate-300';
+                          return (
+                            <tr key={pName} className={`border-b border-slate-800/50 ${idx % 2 === 0 ? 'bg-slate-900/20' : ''} hover:bg-slate-800/30 transition-colors`}>
+                              <td className="py-2 px-3">
+                                <span className={`font-bold ${p.retrograde ? 'text-rose-300' : p.combust ? 'text-orange-300' : 'text-white'}`}>
+                                  {t(pName)}
+                                  {p.retrograde && <span className="text-[9px] text-rose-400 ml-1">{lang === 'ml' ? '(വ)' : '(R)'}</span>}
+                                  {p.combust && <span className="text-[9px] text-orange-400 ml-1">{lang === 'ml' ? '(അ)' : '(C)'}</span>}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3 text-slate-300">{t(p.rasi?.name || '—')}</td>
+                              <td className="py-2 px-3 text-slate-400">{lang === 'ml' ? p.house + '-ാം' : 'H' + p.house}</td>
+                              <td className="py-2 px-3 text-slate-400 font-mono">{deg}</td>
+                              <td className="py-2 px-3 text-indigo-300">{nak}</td>
+                              <td className={`py-2 px-3 font-semibold ${dignityColor}`}>{t(p.dignity)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-[10px] text-slate-600 mt-2 italic">{lang === 'ml' ? '(വ) = വക്രം · (അ) = അസ്തം' : '(R) = Retrograde · (C) = Combust'}</p>
+                </section>
+              )}
 
               {/* Comprehensive Analysis Accordions */}
               <section className="pb-12">
