@@ -791,7 +791,7 @@ const Interpretation = (() => {
     };
   }
 
-  function findFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets = [], pastCount = 2, futureCount = 3) {
+  function findFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets = [], pastCount = 2, futureCount = 3, lang = 'en') {
     if (!dashaTimeline || typeof window === 'undefined' || !window.DashaSystem) return [];
     
     const now = new Date();
@@ -823,8 +823,9 @@ const Interpretation = (() => {
 
       if (mahaProb === 'High') {
         const periodStr = formatPeriod(maha.startDate.dateStr, maha.endDate.dateStr);
+        const reason = lang === 'ml' ? `${maha.lord} മഹാദശ (പ്രധാന സൂചകൻ)` : `${maha.lord} Mahadasha (Primary Significator)`;
         if (!allPeriods.find(p => p.periodStr === periodStr)) {
-          allPeriods.push({ periodStr, probability: mahaProb, isPast: isMahaPast });
+          allPeriods.push({ periodStr, probability: mahaProb, isPast: isMahaPast, reason });
         }
         continue;
       }
@@ -840,8 +841,10 @@ const Interpretation = (() => {
 
         if (antarProb && antarProb !== 'Low') {
           const periodStr = formatPeriod(antar.startDate.dateStr, antar.endDate.dateStr);
+          const reasonType = primaryPlanets.includes(antar.lord) ? (lang === 'ml' ? 'പ്രധാന സൂചകൻ' : 'Primary Significator') : (lang === 'ml' ? 'ദ്വിതീയ സൂചകൻ' : 'Secondary Significator');
+          const reason = lang === 'ml' ? `${maha.lord}-${antar.lord} ദശ (${reasonType})` : `${maha.lord}-${antar.lord} Dasha (${reasonType})`;
           if (!allPeriods.find(p => p.periodStr === periodStr)) {
-            allPeriods.push({ periodStr, probability: antarProb, isPast: isAntarPast });
+            allPeriods.push({ periodStr, probability: antarProb, isPast: isAntarPast, reason });
           }
         }
       }
@@ -874,7 +877,7 @@ const Interpretation = (() => {
     if (chart.planets.Jupiter.dignity === 'Exalted' || chart.planets.Jupiter.dignity === 'Own' || chart.planets.Jupiter.dignity === 'Friendly') {
       secondaryPlanets.push('Jupiter');
     }
-    const upcomingWindows = findFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets, 2, 3);
+    const upcomingWindows = findFavorablePeriods(dashaTimeline, primaryPlanets, secondaryPlanets, 2, 3, lang);
 
     let type = lang === 'ml' ? 'നിശ്ചയിച്ചുറപ്പിച്ച വിവാഹം' : 'Arranged/Traditional';
     // 5th lord (romance) connected to 7th lord (marriage)
@@ -976,7 +979,7 @@ const Interpretation = (() => {
     }
 
     const primaryPlanets = [lord9, lord12, 'Rahu', 'Moon'];
-    const upcomingWindows = findFavorablePeriods(dashaTimeline, primaryPlanets, [], 2, 3);
+    const upcomingWindows = findFavorablePeriods(dashaTimeline, primaryPlanets, [], 2, 3, lang);
     
     return { text: travelStr, windows: upcomingWindows };
   }

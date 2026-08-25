@@ -39,7 +39,7 @@ import {
   Moon, Sun, Star, MapPin, Clock, Calendar, ChevronDown, ChevronUp,
   Activity, Award, Heart, Briefcase, Search, ShieldAlert, Sparkles, User, Users,
   AlertTriangle, CheckCircle, XCircle, TrendingUp, Zap, BookOpen,
-  Target, HandMetal, Flame, Ban, Coins, Brain
+  Target, HandMetal, Flame, Ban, Coins, Brain, Info
 } from 'lucide-react';
 
 // ─── Icon Map ──────────────────────────────────────────────
@@ -720,9 +720,15 @@ function JyothishamApp() {
                  <div className="flex flex-col gap-2">
                    {cr.lifePredictions.marriage.windows.map((w, i) => (
                      <div key={i} className={`flex justify-between items-center p-2 rounded text-sm ${w.isPast ? 'bg-rose-950/10 border border-rose-500/10 opacity-60' : 'bg-rose-950/30 border border-rose-500/20'}`}>
-                       <span className="text-rose-100 font-mono text-xs">
+                       <span className="text-rose-100 font-mono text-xs flex items-center">
                          {w.isPast && <span className="mr-2 text-[9px] uppercase tracking-wider text-rose-500/70 border border-rose-500/20 px-1 rounded">{t('Past')}</span>}
                          {w.periodStr}
+                         <div className="group relative ml-2 cursor-help flex items-center">
+                           <Info size={12} className="text-rose-400/50 group-hover:text-rose-400 transition-colors" />
+                           <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-[200px] bg-slate-800 text-slate-200 text-[10px] p-2 rounded shadow-xl border border-slate-700 z-50 whitespace-normal text-center leading-tight pointer-events-none">
+                             {w.reason}
+                           </div>
+                         </div>
                        </span>
                        <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${w.probability === 'High' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{t(w.probability)}</span>
                      </div>
@@ -770,9 +776,15 @@ function JyothishamApp() {
                  <div className="flex flex-col gap-2">
                    {cr.lifePredictions.travel.windows.map((w, i) => (
                      <div key={i} className={`flex justify-between items-center p-2 rounded text-sm ${w.isPast ? 'bg-slate-900/30 border border-slate-700/10 opacity-60' : 'bg-slate-900/60 border border-slate-700/30'}`}>
-                       <span className="text-white font-mono text-xs">
+                       <span className="text-white font-mono text-xs flex items-center">
                          {w.isPast && <span className="mr-2 text-[9px] uppercase tracking-wider text-slate-400 border border-slate-700 px-1 rounded">{t('Past')}</span>}
                          {w.periodStr}
+                         <div className="group relative ml-2 cursor-help flex items-center">
+                           <Info size={12} className="text-slate-400/50 group-hover:text-slate-300 transition-colors" />
+                           <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-[200px] bg-slate-800 text-slate-200 text-[10px] p-2 rounded shadow-xl border border-slate-700 z-50 whitespace-normal text-center leading-tight pointer-events-none">
+                             {w.reason}
+                           </div>
+                         </div>
                        </span>
                        <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${w.probability === 'High' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>{t(w.probability)}</span>
                      </div>
