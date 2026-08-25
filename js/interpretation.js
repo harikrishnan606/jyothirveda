@@ -313,13 +313,28 @@ const Interpretation = (() => {
       challenges: traits.challenges,
       hiddenPotential: traits.hidden,
       tags: traits.tags,
-      keywords: traits.keywords || [
-        { text: traits.tags[0], icon: 'Target' },
-        { text: traits.tags[1], icon: 'Activity' },
-        { text: traits.tags[2], icon: 'Heart' },
-        { text: traits.tags[3], icon: 'User' },
-        { text: traits.tags[4], icon: 'ShieldAlert' }
-      ],
+      keywords: traits.keywords || traits.tags.map((tag, idx) => {
+        const engTag = LAGNA_TRAITS[chart.lagnaRasiIndex].tags[idx];
+        let icon = 'Star';
+        if (engTag) {
+          const t = engTag.toLowerCase();
+          if (t.includes('practical') || t.includes('goal')) icon = 'Target';
+          else if (t.includes('action') || t.includes('intense')) icon = 'Flame';
+          else if (t.includes('independent') || t.includes('proud') || t.includes('home') || t.includes('social')) icon = 'User';
+          else if (t.includes('patient') || t.includes('nurturing') || t.includes('loyal') || t.includes('generous') || t.includes('compassionate') || t.includes('service') || t.includes('passionate') || t.includes('harmonious')) icon = 'Heart';
+          else if (t.includes('stubborn') || t.includes('secretive') || t.includes('detached')) icon = 'Ban';
+          else if (t.includes('sensual') || t.includes('creative') || t.includes('imaginative') || t.includes('innovative') || t.includes('charming')) icon = 'Sparkles';
+          else if (t.includes('communicative') || t.includes('restless') || t.includes('sensitive')) icon = 'Activity';
+          else if (t.includes('unpredictable') || t.includes('impulsive') || t.includes('adventurous') || t.includes('escapist')) icon = 'Zap';
+          else if (t.includes('curious') || t.includes('perceptive') || t.includes('analytical')) icon = 'Brain';
+          else if (t.includes('philosophical') || t.includes('spiritual')) icon = 'BookOpen';
+          else if (t.includes('inconsistent') || t.includes('moody') || t.includes('critical') || t.includes('indecisive') || t.includes('blunt') || t.includes('anxious')) icon = 'AlertTriangle';
+          else if (t.includes('protective') || t.includes('brave') || t.includes('resilient')) icon = 'ShieldAlert';
+          else if (t.includes('confident') || t.includes('optimistic')) icon = 'Award';
+          else if (t.includes('adaptable')) icon = 'TrendingUp';
+        }
+        return { text: tag, icon };
+      }),
       keyYogas: yogaNames,
       lagnaNakshatra: chart.lagnaNakshatra
     };
@@ -646,7 +661,7 @@ const Interpretation = (() => {
 
     let finKw = lang === 'ml' ? 'സാമ്പത്തിക അച്ചടക്കം' : 'Financial Discipline';
     let finIcon = 'Coins';
-    if (financeScore >= 75) { finKw = lang === 'ml' ? 'സമ്പത്ത് വർദ്ധനവ്' : 'Wealth Accumulation'; finIcon = 'Activity'; }
+    if (financeScore >= 75) { finKw = lang === 'ml' ? 'സമ്പത്ത് വർദ്ധനവ്' : 'Wealth Accumulation'; finIcon = 'TrendingUp'; }
     else if (financeScore < 40) { finKw = lang === 'ml' ? 'സാമ്പത്തിക ബുദ്ധിമുട്ടുകൾ' : 'Financial Restraints'; finIcon = 'AlertTriangle'; }
 
     insights.push({
@@ -884,16 +899,16 @@ const Interpretation = (() => {
     // Body parts mapped to signs (0=Aries...11=Pisces)
     const bodyMap = {
       0: { text: lang === 'ml' ? 'തല/തലച്ചോറ്' : 'Head/Brain', icon: 'Brain' },
-      1: { text: lang === 'ml' ? 'തൊണ്ട/മുഖം' : 'Throat/Face', icon: 'Activity' },
-      2: { text: lang === 'ml' ? 'കൈകൾ/ശ്വാസകോശം' : 'Arms/Lungs', icon: 'Wind' },
+      1: { text: lang === 'ml' ? 'തൊണ്ട/മുഖം' : 'Throat/Face', icon: 'User' },
+      2: { text: lang === 'ml' ? 'കൈകൾ/ശ്വാസകോശം' : 'Arms/Lungs', icon: 'Activity' },
       3: { text: lang === 'ml' ? 'നെഞ്ച്/ഹൃദയം' : 'Chest/Heart', icon: 'Heart' },
-      4: { text: lang === 'ml' ? 'വയറ്/ഹൃദയം' : 'Stomach/Heart', icon: 'Activity' },
+      4: { text: lang === 'ml' ? 'വയറ്/ഹൃദയം' : 'Stomach/Heart', icon: 'Heart' },
       5: { text: lang === 'ml' ? 'കുടൽ/ഗ്യാസ്ട്രിക്' : 'Intestines/Gastric', icon: 'Flame' },
-      6: { text: lang === 'ml' ? 'വൃക്കകൾ/നടുവേദന' : 'Kidneys/Lower Back', icon: 'Activity' },
-      7: { text: lang === 'ml' ? 'പ്രത്യുൽപാദന അവയവങ്ങൾ' : 'Reproductive', icon: 'Activity' },
-      8: { text: lang === 'ml' ? 'തുടകൾ/ഇടുപ്പ്' : 'Thighs/Hips', icon: 'Activity' },
-      9: { text: lang === 'ml' ? 'കാൽമുട്ടുകൾ/സന്ധികൾ' : 'Knees/Joints', icon: 'Activity' },
-      10: { text: lang === 'ml' ? 'കാലിലെ പേശികൾ/ഞരമ്പുകൾ' : 'Calves/Nerves', icon: 'Activity' },
+      6: { text: lang === 'ml' ? 'വൃക്കകൾ/നടുവേദന' : 'Kidneys/Lower Back', icon: 'AlertTriangle' },
+      7: { text: lang === 'ml' ? 'പ്രത്യുൽപാദന അവയവങ്ങൾ' : 'Reproductive', icon: 'Sparkles' },
+      8: { text: lang === 'ml' ? 'തുടകൾ/ഇടുപ്പ്' : 'Thighs/Hips', icon: 'HandMetal' },
+      9: { text: lang === 'ml' ? 'കാൽമുട്ടുകൾ/സന്ധികൾ' : 'Knees/Joints', icon: 'Target' },
+      10: { text: lang === 'ml' ? 'കാലിലെ പേശികൾ/ഞരമ്പുകൾ' : 'Calves/Nerves', icon: 'Zap' },
       11: { text: lang === 'ml' ? 'പാദങ്ങൾ/പ്രതിരോധശേഷി' : 'Feet/Immunity', icon: 'ShieldAlert' }
     };
 
@@ -909,11 +924,11 @@ const Interpretation = (() => {
       Moon: { text: lang === 'ml' ? 'മാനസിക സമ്മർദ്ദം' : 'Mental Stress', icon: 'Brain' },
       Mars: { text: lang === 'ml' ? 'ശരീരത്തിലെ ചൂട്/വീക്കം' : 'Inflammation/Heat', icon: 'Flame' },
       Mercury: { text: lang === 'ml' ? 'നാഡീവ്യൂഹം' : 'Nervous System', icon: 'Brain' },
-      Jupiter: { text: lang === 'ml' ? 'കരളിലെ കൊഴുപ്പ്/ദഹനം' : 'Liver/Digestion', icon: 'Activity' },
+      Jupiter: { text: lang === 'ml' ? 'കരളിലെ കൊഴുപ്പ്/ദഹനം' : 'Liver/Digestion', icon: 'Flame' },
       Venus: { text: lang === 'ml' ? 'പ്രമേഹം/ചർമ്മം' : 'Sugar/Skin', icon: 'Sparkles' },
-      Saturn: { text: lang === 'ml' ? 'വിട്ടുമാറാത്ത രോഗങ്ങൾ/അസ്ഥികൾ' : 'Chronic/Bones', icon: 'Activity' },
-      Rahu: { text: lang === 'ml' ? 'കണ്ടുപിടിക്കാൻ ബുദ്ധിമുട്ടുള്ള അസുഖങ്ങൾ' : 'Unusual/Undiagnosed', icon: 'Activity' },
-      Ketu: { text: lang === 'ml' ? 'വൈറസ്/പകർച്ചവ്യാധി' : 'Viral/Infections', icon: 'Activity' }
+      Saturn: { text: lang === 'ml' ? 'വിട്ടുമാറാത്ത രോഗങ്ങൾ/അസ്ഥികൾ' : 'Chronic/Bones', icon: 'AlertTriangle' },
+      Rahu: { text: lang === 'ml' ? 'കണ്ടുപിടിക്കാൻ ബുദ്ധിമുട്ടുള്ള അസുഖങ്ങൾ' : 'Unusual/Undiagnosed', icon: 'Search' },
+      Ketu: { text: lang === 'ml' ? 'വൈറസ്/പകർച്ചവ്യാധി' : 'Viral/Infections', icon: 'Zap' }
     };
     
     // Add specific planetary vulnerabilities based on 6th lord
@@ -936,8 +951,8 @@ const Interpretation = (() => {
       behavioral.push({ text: lang === 'ml' ? 'തർക്കങ്ങൾ ഒഴിവാക്കുക' : 'Avoid Conflict', icon: 'Ban' });
     }
     if (behavioral.length === 0) {
-      behavioral.push({ text: lang === 'ml' ? 'കൃത്യമായ ദിനചര്യ പാലിക്കുക' : 'Maintain Routine', icon: 'Calendar' });
-      behavioral.push({ text: lang === 'ml' ? 'ആരോഗ്യകരമായ ഭക്ഷണം' : 'Mindful Eating', icon: 'Activity' });
+      behavioral.push({ text: lang === 'ml' ? 'കൃത്യമായ ദിനചര്യ പാലിക്കുക' : 'Maintain Routine', icon: 'CheckCircle' });
+      behavioral.push({ text: lang === 'ml' ? 'ആരോഗ്യകരമായ ഭക്ഷണം' : 'Mindful Eating', icon: 'Heart' });
     }
 
     const cautions = lang === 'ml' ? ['ജോലിയും ജീവിതവും തമ്മിലുള്ള സന്തുലിതാവസ്ഥ', 'മാനസിക സമ്മർദ്ദം നിയന്ത്രിക്കുക'] : ['Work-life balance', 'Manage stress levels proactively'];
