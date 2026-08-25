@@ -359,10 +359,17 @@ const Interpretation = (() => {
       Mercury: lang === 'ml' ? 'ബിസിനസ്സ്, ആശയവിനിമയം, ഐടി, അക്കൗണ്ടിംഗ്, എഴുത്ത്' : 'Business, communication, IT, accounting, writing',
       Jupiter: lang === 'ml' ? 'വിദ്യാഭ്യാസം, നിയമം, ധനകാര്യം, കൺസൾട്ടിംഗ്, ആത്മീയത' : 'Education, law, finance, consulting, spirituality',
       Venus: lang === 'ml' ? 'കലകൾ, വിനോദം, ആഡംബര വസ്തുക്കൾ, ഫാഷൻ, ഹോസ്പിറ്റാലിറ്റി' : 'Arts, entertainment, luxury goods, fashion, hospitality',
-      Saturn: lang === 'ml' ? 'നിർമ്മാണം, കൃഷി, ഖനനം, തൊഴിൽ, മാനുഫാക്ചറിംഗ്' : 'Construction, agriculture, mining, labor, manufacturing'
+      Saturn: lang === 'ml' ? 'നിർമ്മാണം, കൃഷി, ഖനനം, തൊഴിൽ, മാനുഫാക്ചറിംഗ്' : 'Construction, agriculture, mining, labor, manufacturing',
+      Rahu: lang === 'ml' ? 'സാങ്കേതികവിദ്യ, വ്യോമയാനം, ഫോട്ടോഗ്രാഫി, വിദേശ വ്യാപാരം, ഗവേഷണം' : 'Technology, aviation, photography, foreign trade, research',
+      Ketu: lang === 'ml' ? 'ആയുർവേദം, ജ്യോതിഷം, ഗവേഷണം, ആത്മീയത, കമ്പ്യൂട്ടർ പ്രോഗ്രാമിംഗ്' : 'Ayurveda, astrology, research, spirituality, computer programming'
     };
 
-    const fields = careerSignificators[lord10] || (lang === 'ml' ? 'വിവിധ മേഖലകൾ' : 'Diverse fields');
+    let fieldList = [careerSignificators[lord10]];
+    house10.occupants.forEach(occ => {
+      if (careerSignificators[occ]) fieldList.push(careerSignificators[occ]);
+    });
+    const fields = Array.from(new Set(fieldList.filter(Boolean))).join(' | ') || (lang === 'ml' ? 'വിവിധ മേഖലകൾ' : 'Diverse fields');
+    
     const isStrong = lord10Data.dignity !== 'Debilitated' && lord10Data.dignity !== 'Enemy';
     const inKendra = [1, 4, 7, 10].includes(lord10Data.house);
     const inTrikona = [1, 5, 9].includes(lord10Data.house);
@@ -382,13 +389,7 @@ const Interpretation = (() => {
       trajectory = lang === 'ml' ? 'തുടക്കത്തിലെ പ്രതിസന്ധികൾ മറികടന്നുള്ള വളർച്ച' : 'Growth after overcoming initial challenges';
     }
 
-    let specificFields = fields;
-    // Add occupant influence to fields
-    house10.occupants.forEach(occ => {
-       if (careerSignificators[occ]) {
-          specificFields += ', ' + careerSignificators[occ].split(',')[0].toLowerCase();
-       }
-    });
+    const specificFields = fields;
 
     const educationTags = interpretEducation(chart, lang);
 
